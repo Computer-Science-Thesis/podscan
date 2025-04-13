@@ -25,7 +25,10 @@ class _SplashViewBodyState extends State<_SplashViewBody> {
   @override
   void initState() {
     super.initState();
-    Future.microtask(() {
+
+    // Call after widget is fully built
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
       context.read<SplashViewModel>().initializeApp(context);
     });
   }
