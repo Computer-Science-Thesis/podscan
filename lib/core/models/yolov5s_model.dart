@@ -12,6 +12,9 @@ class YoloV5sModel extends BaseModel {
   int? _detectedObjectIndex;
 
   bool get hasOutput => _normalizedBboxMinmax != null && _detectedObjectConfidence != null && _detectedObjectIndex != null;
+  List<double>? get normalizedBboxMinmax => _normalizedBboxMinmax;
+  double? get detectedObjectConfidence => _detectedObjectConfidence;
+  int? get detectedObjectIndex => _detectedObjectIndex;
 
   Future<void> runInference({
     required File imageFile,
