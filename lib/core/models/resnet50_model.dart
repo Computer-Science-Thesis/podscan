@@ -38,7 +38,7 @@ class ResNet50Model extends BaseModel {
     final img.Image croppedImage = img.copyCrop(decodedImage, x: x, y: y, width: width, height: height);
 
     final Directory temporaryDirectory = await getTemporaryDirectory();
-    final String croppedImagePath = "$temporaryDirectory/cropped_${DateTime.now().millisecondsSinceEpoch}.jpg";
+    final String croppedImagePath = "${temporaryDirectory.path}/cropped_${DateTime.now().millisecondsSinceEpoch}.jpg";
     final File croppedImageFile = File(croppedImagePath);
     await croppedImageFile.writeAsBytes(img.encodeJpg(croppedImage));
 
