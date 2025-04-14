@@ -14,7 +14,9 @@ dependencies:
 
   cupertino_icons: ^1.0.8
   image: ^4.5.4
+  image_picker: ^1.1.2
   path_provider: ^2.1.5
+  permission_handler: 12.0.0+1
   provider: ^6.1.4
   tflite_flutter: ^0.11.0
 
@@ -33,7 +35,12 @@ flutter:
     - assets/models/unet/
     - assets/models/yolov5s/
     - assets/labels/
+    - assets/images/
 
+  fonts:
+    - family: CinzelDecorative
+      fonts:
+        - asset: assets/fonts/CinzelDecorative-Regular.ttf
   # An image asset can refer to one or more resolution-specific "variants", see
   # https://flutter.dev/to/resolution-aware-images
 

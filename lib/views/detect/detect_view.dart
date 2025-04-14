@@ -1,16 +1,17 @@
+import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'detect_viewmodel.dart';
 
 class DetectView extends StatelessWidget {
-  final String imagePlaceHolder;
+  final File imageFile;
 
-  const DetectView({super.key, required this.imagePlaceHolder});
+  const DetectView({super.key, required this.imageFile});
 
   @override
   Widget build(BuildContext context) {
     return ChangeNotifierProvider(
-      create: (_) => DetectViewModel(imagePlaceHolder: imagePlaceHolder),
+      create: (_) => DetectViewModel(imageFile: imageFile),
       child: const _DetectViewBody(),
     );
   }
@@ -56,7 +57,7 @@ class _DetectViewBody extends StatelessWidget {
           style: theme.textTheme.titleLarge,
         ),
         Text(
-          viewModel.imagePlaceHolder,
+          "temporary",
           style: theme.textTheme.bodyMedium?.copyWith(color: Colors.grey),
         ),
       ]
@@ -76,7 +77,7 @@ class _DetectViewBody extends StatelessWidget {
         ),
         alignment: Alignment.center,
         child: Text(
-          viewModel.imagePlaceHolder,
+          "temporary",
           style: theme.textTheme.bodyLarge,
           textAlign: TextAlign.center,
         ),

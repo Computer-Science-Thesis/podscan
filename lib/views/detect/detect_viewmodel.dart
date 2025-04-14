@@ -1,10 +1,11 @@
+import 'dart:io';
 import 'package:flutter/material.dart';
 import '../analyze/analyze_view.dart';
 
 class DetectViewModel with ChangeNotifier {
-  final String imagePlaceHolder;
+  final File imageFile;
 
-  DetectViewModel({required this.imagePlaceHolder});
+  DetectViewModel({required this.imageFile});
 
   void detect(BuildContext context) {
     debugPrint("Detecting...");

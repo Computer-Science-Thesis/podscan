@@ -1,25 +1,62 @@
+import 'dart:io';
 import 'package:flutter/material.dart';
+import 'package:image_picker/image_picker.dart';
+import 'package:permission_handler/permission_handler.dart';
 import '../detect/detect_view.dart';
 
 class HomeViewModel with ChangeNotifier {
   late String imagePlaceHolder;
 
-  void takePhoto(BuildContext context) {
-    debugPrint("Taking Photo...");
-    imagePlaceHolder = "Captured Photo.";
-    goToDetectView(context);
+  Future<void> checkCameraPermission(BuildContext context) async {
+    if (await Permission.camera.request().isGranted) {
+      if (context.mounted) await takePhoto(context);
+    } else if (await Permission.camera.isPermanentlyDenied) {
+      await openAppSettings();
+    }
   }
 
-  void uploadPhoto(BuildContext context) {
-    debugPrint("Uploading Photo...");
-    imagePlaceHolder = "Uploaded Photo.";
-    goToDetectView(context);
+  Future<void> takePhoto(BuildContext context) async {
+    final ImagePicker picker = ImagePicker();
+    try {
+      final XFile? photo = await picker.pickImage(source: ImageSource.camera);
+      if (photo != null && context.mounted) goToDetectView(File(photo.path), context);
+    } catch (e) {
+      debugPrint("Error: $e");
+    }
+
   }
 
-  void goToDetectView(BuildContext context) {
+  Future<void> uploadPhoto(BuildContext context) async {
+    final pickedFile = await ImagePicker().pickImage(source: ImageSource.gallery);
+    if (pickedFile != null && context.mounted) goToDetectView(File(pickedFile.path), context);
+  }
+
+    Future<bool> showExitConfirmationDialog(BuildContext context) async {
+    return await showDialog(
+          context: context,
+          builder: (context) => AlertDialog(
+            title: Text("Confirm Exit"),
+            content: Text(
+                "Closing the app will end your session. Do you want to continue?"),
+            actions: [
+              TextButton(
+                onPressed: () =>
+                    Navigator.of(context).pop(false), // Stay in app
+                child: Text("Cancel"),
+              ),
+              TextButton(
+                onPressed: () => Navigator.of(context).pop(true), // Exit app
+                child: Text("Yes"),
+              ),
+            ],
+          ),
+        ) ?? false; // Default to false if dialog is dismissed
+  }
+
+  void goToDetectView(File imageFile, BuildContext context) {
     debugPrint("Going to Detect View...");
     Navigator.of(context).push(
-      MaterialPageRoute(builder: (_) => DetectView(imagePlaceHolder: imagePlaceHolder))
+      MaterialPageRoute(builder: (_) => DetectView(imageFile: imageFile))
     );
   }
 
