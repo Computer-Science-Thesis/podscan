@@ -1,12 +1,14 @@
 import 'package:flutter/material.dart';
+import '../../core/services/label_service.dart';
+import '../../core/services/model_service.dart';
 import '../home/home_view.dart';
-import '../../core/services/sample_service.dart';
 
 class SplashViewModel with ChangeNotifier {
-  final SampleService _sampleService = SampleService();
-
   Future<void> initializeApp(BuildContext context) async {
-    await _sampleService.load();
+    Future.wait([
+      ModelService().loadAllModels(),
+      LabelService().loadAllLabels()
+    ]);
 
     if (!context.mounted) return;
 
