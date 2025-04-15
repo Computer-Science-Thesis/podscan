@@ -98,7 +98,7 @@ class AnalyzeViewModel with ChangeNotifier {
     if (_diseaseModel.hasOutput) {
       diseaseMap = _convertMapping(_diseaseModel.classIndexToConfidenceMap!, LabelService().getDiseaseLabel);
       diseaseMap = _sortMapping(diseaseMap);
-      _extractPest(pestMap, diseaseMap.keys.toList());
+      pestMap = _extractPest(diseaseMap.keys.toList());
     }
 
     await _varietyModel.runInference(imageFile: _croppedImageFile);
@@ -138,10 +138,12 @@ class AnalyzeViewModel with ChangeNotifier {
     return Map<String, double>.fromEntries(sortedEntries);
   }
 
-  void _extractPest(Map<String, String> map, List<String> diseaseLabels) {
+  Map<String, String> _extractPest(List<String> diseaseLabels) {
+    Map<String, String> map = {};
     for (String diseaseLabel in diseaseLabels) {
       map[diseaseLabel] = LabelService().getPestLabel(diseaseLabel);
     }
+    return map;
   }
 
   void goBack(BuildContext context) {
