@@ -121,13 +121,13 @@ class _DetectViewBody extends StatelessWidget {
               ),
             ),
           ),
-          if (viewModel.isDetecting) _buildLoadingEffect(viewModel, screenHeight * 0.50),
+          if (viewModel.isDetecting) _buildLoadingEffect(screenHeight * 0.50),
         ],
       ),
     );
   }
 
-  Widget _buildLoadingEffect(DetectViewModel viewModel, double containerHeight) {
+  Widget _buildLoadingEffect(double containerHeight) {
     return Container(
       margin: const EdgeInsets.all(16.0),
       height: containerHeight,
