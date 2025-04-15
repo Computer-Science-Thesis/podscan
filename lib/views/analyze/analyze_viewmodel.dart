@@ -1,10 +1,20 @@
+import 'dart:io';
 import 'package:flutter/material.dart';
 import '../result/result_view.dart';
 
 class AnalyzeViewModel with ChangeNotifier {
-  final String imagePlaceHolder;
+  final Map<String, dynamic> detectionOutput;
+  late File _imageFile;
+  late File _drawnImageFile;
 
-  AnalyzeViewModel({required this.imagePlaceHolder});
+  File get drawnImageFile => _drawnImageFile;
+
+  AnalyzeViewModel({required this.detectionOutput}) {
+    _imageFile = detectionOutput["originalImageFile"];
+    _drawnImageFile = detectionOutput["detectedImageFile"];
+    debugPrint(_imageFile.path);
+    debugPrint(_drawnImageFile.path);
+  }
 
   void analyze(BuildContext context) {
     debugPrint("Analyzing...");

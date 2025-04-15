@@ -3,14 +3,14 @@ import 'package:provider/provider.dart';
 import 'analyze_viewmodel.dart';
 
 class AnalyzeView extends StatelessWidget {
-  final String imagePlaceHolder;
+  final Map<String, dynamic> detectionOutput;
 
-  const AnalyzeView({super.key, required this.imagePlaceHolder});
+  const AnalyzeView({super.key, required this.detectionOutput});
 
   @override
   Widget build(BuildContext context) {
     return ChangeNotifierProvider(
-      create: (_) => AnalyzeViewModel(imagePlaceHolder: imagePlaceHolder),
+      create: (_) => AnalyzeViewModel(detectionOutput: detectionOutput),
       child: const _AnalyzeViewBody(),
     );
   }
@@ -53,7 +53,7 @@ class _AnalyzeViewBody extends StatelessWidget {
           style: theme.textTheme.titleLarge,
         ),
         Text(
-          viewModel.imagePlaceHolder,
+          "temporary",
           style: theme.textTheme.bodyMedium?.copyWith(color: Colors.grey),
         ),
       ]
@@ -73,7 +73,7 @@ class _AnalyzeViewBody extends StatelessWidget {
         ),
         alignment: Alignment.center,
         child: Text(
-          viewModel.imagePlaceHolder,
+          "temporary",
           style: theme.textTheme.bodyLarge,
           textAlign: TextAlign.center,
         ),

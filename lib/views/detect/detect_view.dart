@@ -23,92 +23,159 @@ class _DetectViewBody extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final viewModel = context.watch<DetectViewModel>();
-    final theme = Theme.of(context);
+    final screenHeight = MediaQuery.of(context).size.height;
 
     return Scaffold(
-      appBar: AppBar(
-        title: _buildTitle(viewModel, theme),
-        automaticallyImplyLeading: false,
-      ),
-      body: SafeArea(
-        child: Padding(
-          padding: const EdgeInsets.all(16),
+      backgroundColor: const Color(0xFF832637), // Match splash screen
+      body: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 0.0),
+        child: SingleChildScrollView(
           child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Expanded(
-                child: Center(
-                  child: _buildImage(viewModel, theme),
+              _buildHeader(),
+              const SizedBox(height: 10),
+              _buildImageContainer(viewModel, screenHeight),
+              const SizedBox(height: 20),
+              _buildAnalyzeButton(viewModel, context),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  // Builds the header with the app logo and title.
+  Widget _buildHeader() {
+    return Padding(
+      padding: const EdgeInsets.only(left: 15.0, top: 80.0),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          _buildLogo(),
+          const SizedBox(width: 8),
+          _buildTitle(),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildLogo() {
+    return Image.asset(
+      'assets/images/logo.png',
+      height: 70,
+    );
+  }
+
+  Widget _buildTitle() {
+    return RichText(
+      text: const TextSpan(
+        style: TextStyle(
+          fontFamily: 'CinzelDecorative',
+          fontSize: 24,
+          fontWeight: FontWeight.bold,
+        ),
+        children: [
+          TextSpan(
+            text: 'POD',
+            style: TextStyle(color: Color(0xFF7ED957)),
+          ),
+          TextSpan(
+            text: 'SCAN',
+            style: TextStyle(color: Color(0xFFFFDE59)),
+          ),
+        ],
+      ),
+    );
+  }
+
+  // Builds the container to display the image.
+  Widget _buildImageContainer(DetectViewModel viewModel, double screenHeight) {
+    const borderColor = Colors.white;
+    const borderThickness = 2.0;
+    const borderRadius = 5.0;
+
+    return Center(
+      child: Stack(
+        alignment: Alignment.center,
+        children: [
+          Container(
+            margin: const EdgeInsets.all(16.0),
+            height: screenHeight * 0.50, // 50% of screen height
+            width: double.infinity, // Full width
+            decoration: BoxDecoration(
+              border: Border.all(
+                color: borderColor,
+                width: borderThickness,
+              ),
+              borderRadius: BorderRadius.circular(borderRadius),
+            ),
+            child: ClipRRect(
+              borderRadius: BorderRadius.circular(borderRadius),
+              child: FittedBox(
+                fit: BoxFit.cover, // Ensures the image fills the container
+                alignment: Alignment.center, // Centers the image
+                child: Image.file(
+                  viewModel.imageFile,
                 ),
               ),
-              _buildButtons(viewModel, context, theme),
-            ]
-          )
+            ),
+          ),
+          if (viewModel.isDetecting) _buildLoadingEffect(viewModel, screenHeight * 0.50),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildLoadingEffect(DetectViewModel viewModel, double containerHeight) {
+    return Container(
+      margin: const EdgeInsets.all(16.0),
+      height: containerHeight,
+      color: Colors.black.withValues(alpha: 0.5), // Semi-transparent overlay
+      child: Center(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            CircularProgressIndicator(
+              color: Colors.white,
+              backgroundColor: Colors.grey[700], // Visible background
+              strokeWidth: 6, // Thicker for better visibility
+            ),
+          ],
         ),
       ),
     );
   }
 
-  Widget _buildTitle(DetectViewModel viewModel, ThemeData theme) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(
-          "Detect View",
-          style: theme.textTheme.titleLarge,
-        ),
-        Text(
-          "temporary",
-          style: theme.textTheme.bodyMedium?.copyWith(color: Colors.grey),
-        ),
-      ]
-    );
-  }
+  // Builds the analyze button.
+  Widget _buildAnalyzeButton(DetectViewModel viewModel, BuildContext context) {
+    const buttonColor = Color(0xFF628E6E); // Greenish color.
+    const buttonTextColor = Colors.white;
+    const buttonBorderRadius = 10.0;
 
-  Widget _buildImage(DetectViewModel viewModel, ThemeData theme) {
-    return Padding(
-      padding: EdgeInsets.all(12),
-      child: Container(
-        width: double.infinity,
-        height: 900,
-        decoration: BoxDecoration(
-          color: theme.colorScheme.primaryContainer.withValues(alpha: 0.2),
-          borderRadius: BorderRadius.circular(12),
-          border: Border.all(color: theme.colorScheme.primary, width: 2),
+    return Center(
+      child: ElevatedButton(
+        style: ElevatedButton.styleFrom(
+          backgroundColor: buttonColor,
+          foregroundColor: buttonTextColor,
+          minimumSize: const Size(200, 50),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(buttonBorderRadius),
+          ),
+          elevation: 5,
+          disabledBackgroundColor: buttonColor, // Keep green when disabled
+          disabledForegroundColor: buttonTextColor, // Keep white text
         ),
-        alignment: Alignment.center,
+        onPressed:
+            viewModel.isDetecting ? null : () => viewModel.detect(context), // Disable when analyzing
         child: Text(
-          "temporary",
-          style: theme.textTheme.bodyLarge,
-          textAlign: TextAlign.center,
+          viewModel.isDetecting ? 'Detecting' : 'Detect', // Change text dynamically
+          style: const TextStyle(
+            fontFamily: 'CinzelDecorative',
+            fontSize: 18,
+          ),
         ),
       ),
-    );
-  }
-
-  Widget _buildButtons(DetectViewModel viewModel, BuildContext context, ThemeData theme) {
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.center,
-      children: [
-        ElevatedButton.icon(
-          onPressed: () => viewModel.goBack(context),
-          icon: const Icon(Icons.arrow_back),
-          label: const Text("Back"),
-          style: ElevatedButton.styleFrom(
-            padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
-          )
-        ),
-        const SizedBox(width: 16),
-        ElevatedButton.icon(
-          onPressed: () => viewModel.detect(context),
-          icon: const Icon(Icons.search),
-          label: const Text("Detect"),
-          style: ElevatedButton.styleFrom(
-            backgroundColor: theme.primaryColor,
-            foregroundColor: Colors.white,
-            padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
-          )
-        ),
-      ],
     );
   }
 
