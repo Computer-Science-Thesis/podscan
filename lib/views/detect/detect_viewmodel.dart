@@ -51,7 +51,7 @@ class DetectViewModel with ChangeNotifier {
     if (_objectDetectionModel.hasOutput) {
       final String detectedObject = LabelService().getObjectLabel(_objectDetectionModel.detectedObjectIndex!);
       final double detectedObjectConfidence = _objectDetectionModel.detectedObjectConfidence!;
-      detectedObjectMap[detectedObject] = detectedObjectConfidence;
+      detectedObjectMap = {detectedObject: detectedObjectConfidence};
       normalizedBboxMinmax = _objectDetectionModel.normalizedBboxMinmax!;
       detectedImageFile = await _objectDetectionModel.drawBoundingBoxes(_imageFile);
     }
