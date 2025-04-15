@@ -1,3 +1,60 @@
+# 📦 How to Install the APK (Debug Mode)
+
+### ✅ 1. Ensure ProGuard Rules Exist
+
+Make sure the file `android/app/proguard-rules.pro` contains the following:
+
+```proguard
+# Keep TensorFlow Lite GPU delegate classes
+-keep class org.tensorflow.lite.** { *; }
+-dontwarn org.tensorflow.lite.**
+```
+
+### ✅ 2. Edit `android/app/build.gradle.kts`
+Replace this block:
+```
+buildTypes {
+  release {
+      // TODO: Add your own signing config for the release build.
+      // Signing with the debug keys for now, so `flutter run --release` works.
+      signingConfig = signingConfigs.getByName("debug")
+  }
+}
+```
+With this:
+```
+buildTypes {
+  getByName("release") {
+      // TODO: Add your own signing config for the release build.
+      // Signing with the debug keys for now, so `flutter run --release` works.
+      // signingConfig = signingConfigs.getByName("debug")
+      isShrinkResources = true
+      isMinifyEnabled = true
+      proguardFiles(
+          getDefaultProguardFile("proguard-android-optimize.txt"),
+          "proguard-rules.pro"
+      )
+  }
+}
+```
+
+### ✅ 3. Build the APK
+Run:
+```
+flutter build apk --debug
+```
+This will generate the APK at:
+```
+build/app/outputs/flutter-apk/app-debug.apk
+```
+
+### ✅ 4. Edit `android/app/build.gradle.kts`
+Ensure an Android device or emulator is connected. Then run:
+```
+adb install -r build/app/outputs/flutter-apk/app-debug.apk
+adb shell am start -n com.example.podscan/.MainActivity
+```
+
 # Setup the icon of the app
 
 ### 1. Install the latest `flutter_launcher_icons`
