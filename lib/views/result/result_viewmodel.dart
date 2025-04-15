@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
 
 class ResultViewModel with ChangeNotifier {
-  final String imagePlaceHolder;
+  final Map<String, dynamic> analysisOutput;
 
-  ResultViewModel({required this.imagePlaceHolder});
+  ResultViewModel({required this.analysisOutput});
 
   
 }

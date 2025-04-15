@@ -1,5 +1,6 @@
 import 'dart:io';
 import 'package:flutter/material.dart';
+import '../../core/models/resnet50_model.dart';
 import '../../core/services/label_service.dart';
 import '../../core/services/model_service.dart';
 import '../../core/models/yolov5s_model.dart';
@@ -57,8 +58,7 @@ class DetectViewModel with ChangeNotifier {
     }
 
     return {
-      "originalImageFile": _imageFile,
-      "normalizedBboxMinmax": normalizedBboxMinmax,
+      "croppedImageFile": await ResNet50Model.cropImage(_imageFile, normalizedBboxMinmax),
       "detectedImageFile": detectedImageFile,
       "detectedObjectMap": detectedObjectMap
     };

@@ -3,13 +3,13 @@ import 'package:provider/provider.dart';
 import 'result_viewmodel.dart';
 
 class ResultView extends StatelessWidget {
-  final String imagePlaceHolder;
-  const ResultView({super.key, required this.imagePlaceHolder});
+  final Map<String, dynamic> analysisOutput;
+  const ResultView({super.key, required this.analysisOutput});
 
   @override
   Widget build(BuildContext context) {
     return ChangeNotifierProvider(
-      create: (_) => ResultViewModel(imagePlaceHolder: imagePlaceHolder),
+      create: (_) => ResultViewModel(analysisOutput: analysisOutput),
       child: const _ResultViewBody(),
     );
   }
@@ -61,7 +61,7 @@ class _ResultViewBody extends StatelessWidget {
       children: [
         const Text("Result View"),
         Text(
-          viewModel.imagePlaceHolder,
+          "temporary",
           style: TextStyle(fontSize: 16),
         ),
       ]
