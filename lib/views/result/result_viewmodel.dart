@@ -13,7 +13,7 @@ class ResultViewModel with ChangeNotifier {
   File get imageFile => _imageFile;
   String get topVariety => _varietyMap.entries.first.key;
   String get topVarietyNSICNumber => LabelService().getNSICNumber(topVariety);
-  List<String> get possibleVarieties => _varietyMap.keys.toList();
+  List<String> get possibleVarietiesWithConfidences => _varietyMap.entries.map((entry) => "${entry.key}: ${(entry.value * 100).round()}%").toList();
   String get cacaoDescription => LabelService().getCacaoDescription(topVariety);
   String get topDisease => _diseaseMap.entries.first.key;
   String get topPest => _pestMap.entries.first.value;

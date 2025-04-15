@@ -149,7 +149,7 @@ class _ResultViewBody extends StatelessWidget {
             ),
           ),
           const Divider(),
-          ...viewModel.possibleVarieties
+          ...viewModel.possibleVarietiesWithConfidences
               .map((v) => Text(v, style: const TextStyle(fontSize: 16))),
         ],
       ),
