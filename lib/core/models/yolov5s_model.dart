@@ -127,11 +127,13 @@ class YoloV5sModel extends BaseModel {
     return iou;
   }
 
-  Future<File> drawBoundingBoxes(File imageFile, List<double> normalizedBboxMinMax) async {
+  Future<File> drawBoundingBoxes(File imageFile) async {
+    if (!hasOutput) return imageFile;
+
     final Uint8List imageBytes = imageFile.readAsBytesSync();
     final img.Image decodedImage = img.decodeImage(imageBytes)!;
 
-    final List<double> bbox = normalizedBboxMinMax;
+    final List<double> bbox = normalizedBboxMinmax!;
     final int xmin = (bbox[0] * decodedImage.width).toInt();
     final int ymin = (bbox[1] * decodedImage.height).toInt();
     final int xmax = (bbox[2] * decodedImage.width).toInt();
