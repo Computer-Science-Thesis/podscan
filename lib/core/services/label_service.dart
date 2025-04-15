@@ -26,9 +26,9 @@ class LabelService {
     _varietyLabels = await _loadLabel("assets/labels/variety_label.txt");
     _cacaoDescriptions = await _loadCacaoDescriptions("assets/labels/cacao_descriptions.txt");
     _cacaoNSICNumbers = {
-      'br25': 'NSIC 2000 Cc05',
-      'pbc123': 'NSIC 2014 Cc 11',
-      'uf18': 'NSIC 1997 Cc01'
+      'BR25': 'NSIC 2000 Cc05',
+      'PBC123': 'NSIC 2014 Cc 11',
+      'UF18': 'NSIC 1997 Cc01'
     };
     _diseaseRecommendations = await _loadRecommendations(
       healthyPath: "assets/labels/recommendations_healthy.txt",
