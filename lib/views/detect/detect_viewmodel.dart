@@ -1,7 +1,7 @@
 import 'dart:io';
 import 'package:flutter/material.dart';
-import 'package:podscan/core/services/label_service.dart';
-import 'package:podscan/core/services/model_service.dart';
+import '../../core/services/label_service.dart';
+import '../../core/services/model_service.dart';
 import '../../core/models/yolov5s_model.dart';
 import '../analyze/analyze_view.dart';
 
