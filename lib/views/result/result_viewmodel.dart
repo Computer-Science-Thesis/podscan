@@ -18,7 +18,7 @@ class ResultViewModel with ChangeNotifier {
   String get topDisease => _diseaseMap.entries.first.key;
   String get topPest => _pestMap.entries.first.value;
   String get severityLevel => "${(_diseasePercentage * 100).round()}%";
-  String get recommendation => LabelService().getDiseaseRecommendation(topVariety == "Healthy");
+  String get recommendation => LabelService().getDiseaseRecommendation(topDisease == "Healthy");
   bool get isExpanded => _isExpanded;
 
   ResultViewModel({required Map<String, dynamic> analysisOutput}) {

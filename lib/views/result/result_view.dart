@@ -203,7 +203,7 @@ class _ResultViewBody extends StatelessWidget {
             ),
           ),
           const Divider(),
-          if (viewModel.topDisease == 'HEALTHY') ...[
+          if (viewModel.topDisease == 'Healthy') ...[
             _buildInfoRow('Pod Condition:', 'Healthy'),
             const SizedBox(height: 10),
             _buildExpandableSection(viewModel),
