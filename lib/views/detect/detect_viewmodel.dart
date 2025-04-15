@@ -7,6 +7,7 @@ import '../../core/models/yolov5s_model.dart';
 import '../analyze/analyze_view.dart';
 
 class DetectViewModel with ChangeNotifier {
+  final ModelService _modelService = ModelService();
   late File _imageFile;
   late YoloV5sModel _objectDetectionModel;
   bool isDetecting = false;
@@ -15,7 +16,19 @@ class DetectViewModel with ChangeNotifier {
 
   DetectViewModel({required File imageFile}) {
     _imageFile = imageFile;
-    _objectDetectionModel = ModelService().objectDetectionModel;
+    _loadModels();
+  }
+
+  Future<void> _loadModels() async {
+    try {
+      _objectDetectionModel = await _modelService.getModel("objectDetection") as YoloV5sModel;
+    } catch (e) {
+      debugPrint("Error loading model: $e");
+    }
+  }
+
+  void _unloadModels() {
+    ModelService().unloadModel("objectDetection");
   }
 
   Future<void> detect(BuildContext context) async {
@@ -34,9 +47,7 @@ class DetectViewModel with ChangeNotifier {
 
     isDetecting = true;
     notifyListeners();
-
     final Map<String, dynamic> output = await _runInference();
-
     isDetecting = false;
     notifyListeners();
 
@@ -66,11 +77,13 @@ class DetectViewModel with ChangeNotifier {
 
   void goBack(BuildContext context) {
     debugPrint("Going Back...");
+    _unloadModels();
     Navigator.of(context).pop();
   }
 
   void goToAnalyzeView(BuildContext context, Map<String, dynamic> output) {
     debugPrint("Going to Analyze View...");
+    _unloadModels();
     Navigator.of(context).pushReplacement(
       MaterialPageRoute(builder: (_) => AnalyzeView(detectionOutput: output))
     );

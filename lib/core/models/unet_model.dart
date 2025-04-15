@@ -11,8 +11,9 @@ class UNetModel extends BaseModel {
   bool get hasOutput => _normalizedPixelValues != null && _normalizedPixelValues!.isNotEmpty;
   List<List<double>>? get normalizedPixelValues => _normalizedPixelValues;
 
+  @override
   Future<void> runInference({required File imageFile}) async {
-    await runBaseInference(imageFile);
+    await super.runInference(imageFile: imageFile);
     if (!hasBaseOutput) {
       _normalizedPixelValues = null;
       return;

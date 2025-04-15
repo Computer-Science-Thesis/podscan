@@ -28,7 +28,7 @@ class BaseModel {
     }
   }
 
-  Future<void> runBaseInference(File imageFile) async {
+  Future<void> runInference({required File imageFile}) async {
     if (!isLoaded) {
       throw Exception("Error: Attempting to use an unloaded model.");
     }

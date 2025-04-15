@@ -16,12 +16,13 @@ class YoloV5sModel extends BaseModel {
   double? get detectedObjectConfidence => _detectedObjectConfidence;
   int? get detectedObjectIndex => _detectedObjectIndex;
 
+  @override
   Future<void> runInference({
     required File imageFile,
     double confidenceThreshold = 0.5,
     double nmsIouThreshold = 0.5
   }) async {
-    await runBaseInference(imageFile);
+    await super.runInference(imageFile: imageFile);
     if (!hasBaseOutput) {
       _normalizedBboxMinmax = null;
       _detectedObjectConfidence = null;

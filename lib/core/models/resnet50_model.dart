@@ -11,8 +11,9 @@ class ResNet50Model extends BaseModel {
   bool get hasOutput => _classIndexToConfidenceMap != null && _classIndexToConfidenceMap!.isNotEmpty;
   Map<int, double>? get classIndexToConfidenceMap => _classIndexToConfidenceMap;
 
+  @override
   Future<void> runInference({required File imageFile}) async {
-    await runBaseInference(imageFile);
+    await super.runInference(imageFile: imageFile);
     if (!hasBaseOutput) {
       _classIndexToConfidenceMap = null;
       return;

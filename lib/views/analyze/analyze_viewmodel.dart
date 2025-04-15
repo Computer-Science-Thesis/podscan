@@ -7,10 +7,11 @@ import 'package:podscan/core/services/model_service.dart';
 import '../result/result_view.dart';
 
 class AnalyzeViewModel with ChangeNotifier {
-  final ResNet50Model _diseaseModel = ModelService().diseaseModel;
-  final ResNet50Model _varietyModel = ModelService().varietyModel;
-  final UNetModel _diseaseMaskModel = ModelService().diseaseMaskModel;
-  final UNetModel _podMaskModel = ModelService().podMaskModel;
+  final ModelService _modelService = ModelService();
+  late ResNet50Model _diseaseModel;
+  late ResNet50Model _varietyModel;
+  late UNetModel _diseaseMaskModel;
+  late UNetModel _podMaskModel;
 
   bool _isAnalyzing = false;
   late File _croppedImageFile;
@@ -36,10 +37,30 @@ class AnalyzeViewModel with ChangeNotifier {
     _detectedObject = detectedObjectMap.entries.first.key;
     _confidenceScore = detectedObjectMap.entries.first.value;
 
+    _loadModels();
+
     debugPrint(_croppedImageFile.path);
     debugPrint(_drawnImageFile.path);
     debugPrint(_detectedObject);
     debugPrint(_confidenceScore.toStringAsFixed(2));
+  }
+
+  Future<void> _loadModels() async {
+    try {
+      _diseaseModel = await _modelService.getModel("disease") as ResNet50Model;
+      _varietyModel = await _modelService.getModel("variety") as ResNet50Model;
+      _diseaseMaskModel = await _modelService.getModel("diseaseMask") as UNetModel;
+      _podMaskModel = await _modelService.getModel("podMask") as UNetModel;
+    } catch (e) {
+      debugPrint("Error loading models: $e");
+    }
+  }
+
+  void _unloadModels() {
+    _modelService.unloadModel("disease");
+    _modelService.unloadModel("variety");
+    _modelService.unloadModel("diseaseMask");
+    _modelService.unloadModel("podMask");
   }
 
   Future<void> analyze(BuildContext context) async {
@@ -125,10 +146,13 @@ class AnalyzeViewModel with ChangeNotifier {
 
   void goBack(BuildContext context) {
     debugPrint("Going Back...");
+    _unloadModels();
     Navigator.of(context).pop();
   }
 
   void goToResultView(BuildContext context, Map<String, dynamic> output) {
+    debugPrint("Going to Result View...");
+    _unloadModels();
     Navigator.of(context).pushReplacement(
       MaterialPageRoute(builder: (_) => ResultView(analysisOutput: output))
     );
