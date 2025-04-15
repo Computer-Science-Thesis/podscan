@@ -17,7 +17,7 @@ class ResultViewModel with ChangeNotifier {
   String get cacaoDescription => LabelService().getCacaoDescription(topVariety);
   String get topDisease => _diseaseMap.entries.first.key;
   String get topPest => _pestMap.entries.first.value;
-  String get severityLevel => "${_diseasePercentage.toStringAsFixed(2)}%";
+  String get severityLevel => "${(_diseasePercentage * 100).round()}%";
   String get recommendation => LabelService().getDiseaseRecommendation(topVariety == "Healthy");
   bool get isExpanded => _isExpanded;
 
