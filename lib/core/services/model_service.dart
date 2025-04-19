@@ -4,6 +4,46 @@ import '../models/resnet50_model.dart';
 import '../models/unet_model.dart';
 import '../models/yolov5s_model.dart';
 
+enum ModelType {
+  disease,
+  variety,
+  objectDetection,
+  diseaseMask,
+  podMask
+}
+
+extension ModelTypeExtension on ModelType {
+  String get modelPath {
+    switch (this) {
+      case ModelType.disease:
+        return "assets/models/resnet50/disease_model.tflite";
+      case ModelType.variety:
+        return "assets/models/resnet50/variety_model.tflite";
+      case ModelType.objectDetection:
+        return "assets/models/yolov5s/object_model.tflite";
+      case ModelType.diseaseMask:
+        return "assets/models/unet/disease_model.tflite";
+      case ModelType.podMask:
+        return "assets/models/unet/pod_mask.tflite";
+    }
+  }
+
+  String get displayName {
+        switch (this) {
+      case ModelType.disease:
+        return "Disease Classification";
+      case ModelType.variety:
+        return "Variety Classification";
+      case ModelType.objectDetection:
+        return "Object Detection";
+      case ModelType.diseaseMask:
+        return "Disease Mask Segmentation";
+      case ModelType.podMask:
+        return "Pod Mask Segmentation";
+    }
+  }
+}
+
 class ModelService {
   static final ModelService _instance = ModelService._internal();
 
@@ -25,75 +65,70 @@ class ModelService {
 
   ModelService._internal();
 
-  Future<BaseModel?> getModel(String modelType) async {
+  Future<BaseModel?> getModel(ModelType modelType) async {
     switch (modelType) {
-      case "disease":
+      case ModelType.disease:
         if (_diseaseModel == null) {
           _diseaseModel = ResNet50Model();
-          await _loadModel(_diseaseModel!, "assets/models/resnet50/disease_model.tflite");
+          await _loadModel(_diseaseModel!, modelType.modelPath);
         }
         return _diseaseModel;
-      case "variety":
+      case ModelType.variety:
           if (_varietyModel == null) {
             _varietyModel = ResNet50Model();
-            await _loadModel(_varietyModel!, "assets/models/resnet50/variety_model.tflite");
+            await _loadModel(_varietyModel!, modelType.modelPath);
           }
           return _varietyModel;
-      case "objectDetection":
+      case ModelType.objectDetection:
           if (_objectDetectionModel == null) {
             _objectDetectionModel = YoloV5sModel();
-            await _loadModel(_objectDetectionModel!, "assets/models/yolov5s/object_model.tflite");
+            await _loadModel(_objectDetectionModel!, modelType.modelPath);
           }
           return _objectDetectionModel;
-      case "diseaseMask":
+      case ModelType.diseaseMask:
           if (_diseaseMaskModel == null) {
             _diseaseMaskModel = UNetModel();
-            await _loadModel(_diseaseMaskModel!, "assets/models/unet/disease_mask.tflite");
+            await _loadModel(_diseaseMaskModel!, modelType.modelPath);
           }
           return _diseaseMaskModel;
-      case "podMask":
+      case ModelType.podMask:
           if (_podMaskModel == null) {
             _podMaskModel = UNetModel();
-            await _loadModel(_podMaskModel!, "assets/models/unet/pod_mask.tflite");
+            await _loadModel(_podMaskModel!, modelType.modelPath);
           }
           return _podMaskModel;
-      default:
-        debugPrint("Unknown model type: $modelType");
-        return null;
     }
   }
 
-  void unloadModel(String modelType) {
+  void unloadModel(ModelType modelType) {
     switch (modelType) {
-      case "disease":
+      case ModelType.disease:
         _diseaseModel?.dispose();
         _diseaseModel = null;
-        debugPrint("Unloaded disease model.");
-      case "variety":
+        debugPrint("Unloaded ${modelType.displayName} model.");
+      case ModelType.variety:
         _varietyModel?.dispose();
         _varietyModel = null;
-        debugPrint("Unloaded variety model.");
-      case "objectDetection":
+        debugPrint("Unloaded ${modelType.displayName} model.");
+      case ModelType.objectDetection:
         _objectDetectionModel?.dispose();
         _objectDetectionModel = null;
-        debugPrint("Unloaded object detection model.");
-      case "diseaseMask":
+        debugPrint("Unloaded ${modelType.displayName} model.");
+      case ModelType.diseaseMask:
         _diseaseMaskModel?.dispose();
         _diseaseMaskModel = null;
-        debugPrint("Unloaded disease mask model.");
-      case "podMask":
+        debugPrint("Unloaded ${modelType.displayName} model.");
+      case ModelType.podMask:
         _podMaskModel?.dispose();
         _podMaskModel = null;
-        debugPrint("Unloaded pod mask model.");
-      default:
-      debugPrint("Unknown model type: $modelType");
+        debugPrint("Unloaded ${modelType.displayName} model.");
     }
   }
 
   Future<void> _loadModel(BaseModel model, String modelPath) async {
     await model.load(modelPath: modelPath);
     if (model.isLoaded) {
-      debugPrint("Model is Loaded: '$modelPath'");
+      debugPrint("Model loaded successfully: '$modelPath'");
     }
   }
 }

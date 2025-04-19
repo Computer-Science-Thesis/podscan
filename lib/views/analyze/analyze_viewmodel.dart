@@ -47,20 +47,20 @@ class AnalyzeViewModel with ChangeNotifier {
 
   Future<void> _loadModels() async {
     try {
-      _diseaseModel = await _modelService.getModel("disease") as ResNet50Model;
-      _varietyModel = await _modelService.getModel("variety") as ResNet50Model;
-      _diseaseMaskModel = await _modelService.getModel("diseaseMask") as UNetModel;
-      _podMaskModel = await _modelService.getModel("podMask") as UNetModel;
+      _diseaseModel = await _modelService.getModel(ModelType.disease) as ResNet50Model;
+      _varietyModel = await _modelService.getModel(ModelType.variety) as ResNet50Model;
+      _diseaseMaskModel = await _modelService.getModel(ModelType.diseaseMask) as UNetModel;
+      _podMaskModel = await _modelService.getModel(ModelType.podMask) as UNetModel;
     } catch (e) {
       debugPrint("Error loading models: $e");
     }
   }
 
   void _unloadModels() {
-    _modelService.unloadModel("disease");
-    _modelService.unloadModel("variety");
-    _modelService.unloadModel("diseaseMask");
-    _modelService.unloadModel("podMask");
+    _modelService.unloadModel(ModelType.disease);
+    _modelService.unloadModel(ModelType.variety);
+    _modelService.unloadModel(ModelType.diseaseMask);
+    _modelService.unloadModel(ModelType.podMask);
   }
 
   Future<void> analyze(BuildContext context) async {

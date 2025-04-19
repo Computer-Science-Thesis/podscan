@@ -21,14 +21,14 @@ class DetectViewModel with ChangeNotifier {
 
   Future<void> _loadModels() async {
     try {
-      _objectDetectionModel = await _modelService.getModel("objectDetection") as YoloV5sModel;
+      _objectDetectionModel = await _modelService.getModel(ModelType.objectDetection) as YoloV5sModel;
     } catch (e) {
       debugPrint("Error loading model: $e");
     }
   }
 
   void _unloadModels() {
-    ModelService().unloadModel("objectDetection");
+    ModelService().unloadModel(ModelType.objectDetection);
   }
 
   Future<void> detect(BuildContext context) async {
