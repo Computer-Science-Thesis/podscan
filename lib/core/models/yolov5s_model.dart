@@ -1,5 +1,4 @@
 import 'dart:io';
-import 'dart:math';
 import 'package:flutter/services.dart';
 import 'package:image/image.dart' as img;
 import 'package:path_provider/path_provider.dart';
@@ -59,73 +58,17 @@ class YoloV5sModel extends BaseModel {
       ]);
     }
 
-    final List<List<double>> filteredBoxes = _nonMaxSuppression(allBoxes, nmsIouThreshold);
-
-    if (filteredBoxes.isEmpty) {
+    if (allBoxes.isEmpty) {
       _normalizedBboxMinmax = null;
       _detectedObjectConfidence = null;
       _detectedObjectIndex = null;
       return;
     }
 
-    List<double> output = filteredBoxes.reduce((a, b) => a[4] > b[4] ? a : b);
+    List<double> output = allBoxes.reduce((a, b) => a[4] > b[4] ? a : b);
     _normalizedBboxMinmax = output.sublist(0, 4);
     _detectedObjectConfidence = output[4];
     _detectedObjectIndex = output[5].toInt();
-  }
-
-  List<List<double>> _nonMaxSuppression(List<List<double>> normalizedBboxMinmax, double iouThreshold) {
-    List<List<double>> selectedBoxes = [];
-  
-    // Sort boxes by confidence score
-    normalizedBboxMinmax.sort((a, b) => b[4].compareTo(a[4]));
-
-    while (normalizedBboxMinmax.isNotEmpty) {
-      final currentBox = normalizedBboxMinmax.removeAt(0);
-      selectedBoxes.add(currentBox);
-
-      List<List<double>> remainingBoxes = [];
-
-      for (List<double> box in normalizedBboxMinmax) {
-        double iou = _calculateIoU(currentBox, box);
-        if (iou <= iouThreshold) {
-          remainingBoxes.add(box);
-        }
-      }
-      normalizedBboxMinmax = remainingBoxes;
-    }
-
-    return selectedBoxes;
-  }
-
-  double _calculateIoU(List<double> normalizedBboxMinmaxA, List<double> normalizedBboxMinmaxB) {
-    // Unpack the bounding box coordinates
-    double xMinA = normalizedBboxMinmaxA[0];
-    double yMinA = normalizedBboxMinmaxA[1];
-    double xMaxA = normalizedBboxMinmaxA[2];
-    double yMaxA = normalizedBboxMinmaxA[3];
-
-    double xMinB = normalizedBboxMinmaxB[0];
-    double yMinB = normalizedBboxMinmaxB[1];
-    double xMaxB = normalizedBboxMinmaxB[2];
-    double yMaxB = normalizedBboxMinmaxB[3];
-
-    // Calculate the area of both boxes
-    double areaA = (xMaxA - xMinA) * (yMaxA - yMinA);
-    double areaB = (xMaxB - xMinB) * (yMaxB - yMinB);
-
-    // Calculate the coordinates of the intersection rectangle
-    double interXMin = max(xMinA, xMinB);
-    double interYMin = max(xMinA, xMinB);
-    double interXMax = min(xMaxA, xMaxB);
-    double interYMax = min(xMaxA, xMaxB);
-
-    // Calculate the area of the intersection rectangle
-    double interArea = max(0, interXMax - interXMin) * max(0, interYMax - interYMin);
-
-    // Calculate the IoU
-    double iou = interArea / (areaA + areaB - interArea);
-    return iou;
   }
 
   Future<File> drawBoundingBoxes(File imageFile) async {
