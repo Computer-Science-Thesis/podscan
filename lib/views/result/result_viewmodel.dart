@@ -17,7 +17,7 @@ class ResultViewModel with ChangeNotifier {
   String get cacaoDescription => LabelService().getCacaoDescription(topVariety);
   String get topDisease => _diseaseMap.entries.first.key;
   String get topPest => _pestMap.entries.first.value;
-  String get severityLevel => "${(_diseasePercentage * 100).round()}%";
+  String get severityLevel => "${(_diseasePercentage * 100).round()}% (${_getSeverityLevel(_diseasePercentage)})";
   String get recommendation => LabelService().getDiseaseRecommendation(topDisease == "Healthy");
   bool get isExpanded => _isExpanded;
 
@@ -27,6 +27,20 @@ class ResultViewModel with ChangeNotifier {
     _pestMap = analysisOutput["pestMap"];
     _varietyMap = analysisOutput["varietyMap"];
     _diseasePercentage = analysisOutput["diseasePercentage"];
+  }
+
+  String _getSeverityLevel(double diseasePercentage) {
+    if (diseasePercentage <= 0.1) {
+      return "Mild";
+    } else if (diseasePercentage <= 0.25) {
+      return "Moderate";
+    } else if (diseasePercentage <= 0.5) {
+      return "Severe";
+    } else if (diseasePercentage <= 0.75) {
+      return "Critical";
+    }
+
+    return "Complete Loss";
   }
 
   void toggleExpand() {
