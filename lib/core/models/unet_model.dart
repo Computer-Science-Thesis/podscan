@@ -1,7 +1,7 @@
 import 'dart:io';
 import 'package:image/image.dart' as img;
 import 'package:path_provider/path_provider.dart';
-import 'base_model.dart';
+import 'package:podscan/core/models/base_model.dart';
 
 class UNetModel extends BaseModel {
   // [[normalizedPixelValue, normalizedPixelValue, ..., normalizedPixelValue]

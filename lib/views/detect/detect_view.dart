@@ -167,7 +167,7 @@ class _DetectViewBody extends StatelessWidget {
           disabledForegroundColor: buttonTextColor, // Keep white text
         ),
         onPressed:
-            viewModel.isDetecting ? null : () => viewModel.detect(context), // Disable when analyzing
+            viewModel.isDetecting ? null : () => viewModel.detectWithIsolate(context), // Disable when analyzing
         child: Text(
           viewModel.isDetecting ? 'Detecting' : 'Detect', // Change text dynamically
           style: const TextStyle(

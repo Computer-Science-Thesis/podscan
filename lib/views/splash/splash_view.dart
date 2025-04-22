@@ -35,22 +35,51 @@ class _SplashViewBodyState extends State<_SplashViewBody> {
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-
     return Scaffold(
-      body: SafeArea(
-        child: Center(
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              const FlutterLogo(size: 80),
-              const SizedBox(height: 16),
-              Text("Loading...", style: theme.textTheme.headlineSmall),
-              const SizedBox(height: 16),
-              const CircularProgressIndicator(),
-            ]
-          ),
+      backgroundColor: Colors.blue, // Color(0xFF832637), // Set background color
+      body: SafeArea(child: _buildLogo()),
+    );
+  }
+
+  Widget _buildLogo() {
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.center,
+      crossAxisAlignment: CrossAxisAlignment.center,
+      children: [
+        Image.asset(
+          'assets/images/logo.png',
+          height: 120,
         ),
+        const SizedBox(width: 10),
+        // _buildDivider(),
+        const SizedBox(width: 10),
+        _buildAppTitle(),
+      ],
+    );
+  }
+
+  Widget _buildAppTitle() {
+    return RichText(
+      text: const TextSpan(
+        style: TextStyle(
+          fontFamily: 'CinzelDecorative', // Apply custom font
+          fontSize: 36,
+          fontWeight: FontWeight.bold,
+        ),
+        children: [
+          TextSpan(
+            text: 'POD',
+            style: TextStyle(
+              color: Color(0xFF7ED957), // Green color for "POD"
+            ),
+          ),
+          TextSpan(
+            text: 'SCAN',
+            style: TextStyle(
+              color: Color(0xFFFFDE59), // Yellow color for "SCAN"
+            ),
+          ),
+        ],
       ),
     );
   }

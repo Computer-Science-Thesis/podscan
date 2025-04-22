@@ -17,9 +17,9 @@ class BaseModel {
   List<int>? get inputShape => _inputShape;
   List<int>? get outputShape => _outputShape;
 
-  Future<void> load({required String modelPath}) async {
+  void load({required File modelFile}) {
     try {
-      _interpreter = await Interpreter.fromAsset(modelPath);
+      _interpreter = Interpreter.fromFile(modelFile);
       _inputShape = _interpreter?.getInputTensors()[0].shape;
       _outputShape = _interpreter?.getOutputTensors()[0].shape;
     } catch (e) {

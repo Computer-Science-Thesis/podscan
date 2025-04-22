@@ -237,7 +237,7 @@ class _AnalyzeViewBody extends StatelessWidget {
         disabledBackgroundColor: buttonColor, // Keep green when disabled
         disabledForegroundColor: buttonTextColor, // Keep white text
       ),
-      onPressed: viewModel.isAnalyzing ? null : () => viewModel.analyze(context), // Disable when analyzing
+      onPressed: viewModel.isAnalyzing ? null : () => viewModel.analyzeWithIsolate(context), // Disable when analyzing
       child: Text(
         viewModel.isAnalyzing ? 'Analyzing' : 'Analyze', // Change text dynamically
         style: const TextStyle(

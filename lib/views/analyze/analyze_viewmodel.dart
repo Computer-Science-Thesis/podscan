@@ -1,33 +1,24 @@
 import 'dart:io';
+import 'dart:ui';
 import 'package:flutter/material.dart';
-import 'package:podscan/core/models/resnet50_model.dart';
+import 'package:podscan/core/isolates/resnet50_isolation.dart';
+import 'package:podscan/core/isolates/unet_isolation.dart';
 import 'package:podscan/core/models/unet_model.dart';
 import 'package:podscan/core/services/label_service.dart';
 import 'package:podscan/core/services/model_service.dart';
+import 'package:podscan/views/home/home_view.dart';
 import '../result/result_view.dart';
 
 class AnalyzeViewModel with ChangeNotifier {
-  final ModelService _modelService = ModelService();
-  late ResNet50Model _diseaseModel;
-  late ResNet50Model _varietyModel;
-  late UNetModel _diseaseMaskModel;
-  late UNetModel _podMaskModel;
-
-  bool _isAnalyzing = false;
   late File _croppedImageFile;
   late File _drawnImageFile;
   late String _detectedObject;
   late double _confidenceScore;
+  bool isAnalyzing = false;
 
-  bool get isAnalyzing => _isAnalyzing;
   File get drawnImageFile => _drawnImageFile;
   String get detectedObject => _detectedObject;
   double get confidenceScore => _confidenceScore;
-
-  bool get modelsAreLoaded => _diseaseModel.isLoaded
-                                  && _varietyModel.isLoaded
-                                  && _diseaseMaskModel.isLoaded
-                                  && _podMaskModel.isLoaded;
 
   AnalyzeViewModel({required detectionOutput}) {
     _croppedImageFile = detectionOutput["croppedImageFile"];
@@ -37,91 +28,50 @@ class AnalyzeViewModel with ChangeNotifier {
     _detectedObject = detectedObjectMap.entries.first.key;
     _confidenceScore = detectedObjectMap.entries.first.value;
 
-    _loadModels();
-
     debugPrint(_croppedImageFile.path);
     debugPrint(_drawnImageFile.path);
     debugPrint(_detectedObject);
     debugPrint(_confidenceScore.toStringAsFixed(2));
   }
 
-  Future<void> _loadModels() async {
-    try {
-      _diseaseModel = await _modelService.getModel(ModelType.disease) as ResNet50Model;
-      _varietyModel = await _modelService.getModel(ModelType.variety) as ResNet50Model;
-      _diseaseMaskModel = await _modelService.getModel(ModelType.diseaseMask) as UNetModel;
-      _podMaskModel = await _modelService.getModel(ModelType.podMask) as UNetModel;
-    } catch (e) {
-      debugPrint("Error loading models: $e");
-    }
-  }
 
-  void _unloadModels() {
-    _modelService.unloadModel(ModelType.disease);
-    _modelService.unloadModel(ModelType.variety);
-    _modelService.unloadModel(ModelType.diseaseMask);
-    _modelService.unloadModel(ModelType.podMask);
-  }
-
-  Future<void> analyze(BuildContext context) async {
-    if (!modelsAreLoaded) {
-      if (!context.mounted) return;
-
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: const Text("Models are not loaded. Please try again later."),
-          duration: Duration(seconds: 3),
-        ),
-      );
-      goBack(context);
-      return;
-    }
-
-    _isAnalyzing = true;
+  Future<void> analyzeWithIsolate(BuildContext context) async {
+    isAnalyzing = true;
     notifyListeners();
 
-    final Map<String, dynamic> output = await _runInference();
+    final Map<String, dynamic> varietyOutput = await runResNet50InferenceInIsolate(ModelType.variety, _croppedImageFile.path, RootIsolateToken.instance!);
+    final Map<String, dynamic> diseaseOutput = await runResNet50InferenceInIsolate(ModelType.disease, _croppedImageFile.path, RootIsolateToken.instance!);
+    final Map<String, dynamic> diseaseMaskOutput = await unetInferenceInIsolate(ModelType.diseaseMask, _croppedImageFile.path, RootIsolateToken.instance!);
+    final Map<String, dynamic> podMaskOutput = await unetInferenceInIsolate(ModelType.podMask, _croppedImageFile.path, RootIsolateToken.instance!);
 
-    _isAnalyzing = false;
+    isAnalyzing = false;
     notifyListeners();
 
-    if (context.mounted) goToResultView(context, output);
-  }
+    if (context.mounted) {
+      Map<int, double> diseaseIndexMap = diseaseOutput['classIndexToConfidenceMap'];
+      Map<int, double> varietyIndexMap = varietyOutput['classIndexToConfidenceMap'];
+      final List<List<double>> diseaseMask = diseaseMaskOutput['normalizedPixelValues'];
+      final List<List<double>> podMask = podMaskOutput['normalizedPixelValues'];
+      double diseasePercentage = 0;
 
-  Future<Map<String, dynamic>> _runInference() async {
-    Map<String, double> diseaseMap = {"none": 0.0};
-    Map<String, String> pestMap = {"none": "none"};
-    Map<String, double> varietyMap = {"none": 0.0};
-    double diseasePercentage = 0.0;
-
-    await _diseaseModel.runInference(imageFile: _croppedImageFile);
-    if (_diseaseModel.hasOutput) {
-      diseaseMap = _convertMapping(_diseaseModel.classIndexToConfidenceMap!, LabelService().getDiseaseLabel);
+      Map<String, double> diseaseMap = _convertMapping(diseaseIndexMap, LabelService().getDiseaseLabel);
       diseaseMap = _sortMapping(diseaseMap);
-      pestMap = _extractPest(diseaseMap.keys.toList());
-    }
-
-    await _varietyModel.runInference(imageFile: _croppedImageFile);
-    if (_varietyModel.hasOutput) {
-      varietyMap = _convertMapping(_varietyModel.classIndexToConfidenceMap!, LabelService().getVarietyLabel);
+      Map<String, double> varietyMap =  _convertMapping(varietyIndexMap, LabelService().getVarietyLabel);
       varietyMap = _sortMapping(varietyMap);
-    }
-
-    await _diseaseMaskModel.runInference(imageFile: _croppedImageFile);
-    await _podMaskModel.runInference(imageFile: _croppedImageFile);
-    if (_diseaseMaskModel.hasOutput && _podMaskModel.hasOutput) {
-      List<List<double>> diseaseMask = _diseaseMaskModel.normalizedPixelValues!;
-      List<List<double>> podMask = _podMaskModel.normalizedPixelValues!;
+      Map<String, String> pestMap = _extractPest(diseaseMap.keys.toList());
       diseasePercentage = UNetModel.podDiseaseIntersectionRatio(targetMask: diseaseMask, referenceMask: podMask);
-    }
+      debugPrint(diseaseMap.toString());
+      debugPrint(varietyMap.toString());
+      debugPrint(diseasePercentage.toStringAsFixed(2));
 
-    return {
-      "analyzedImageFile": _drawnImageFile,
-      "diseaseMap": diseaseMap,
-      "pestMap": pestMap,
-      "varietyMap": varietyMap,
-      "diseasePercentage": diseasePercentage,
-    };
+      goToResultView(context, {
+        'analyzedImageFile': _drawnImageFile,
+        'diseaseMap': diseaseMap,
+        'pestMap': pestMap,
+        'varietyMap': varietyMap,
+        'diseasePercentage': diseasePercentage,
+      });
+    }
   }
 
   Map<String, double> _convertMapping(Map<int, double> fromMap, String Function(int) getLabel) {
@@ -148,15 +98,13 @@ class AnalyzeViewModel with ChangeNotifier {
 
   void goBack(BuildContext context) {
     debugPrint("Going Back...");
-    _unloadModels();
     Navigator.of(context).pop();
   }
 
   void goToResultView(BuildContext context, Map<String, dynamic> output) {
     debugPrint("Going to Result View...");
-    _unloadModels();
     Navigator.of(context).pushReplacement(
-      MaterialPageRoute(builder: (_) => ResultView(analysisOutput: output))
+      MaterialPageRoute(builder: (_) => ResultView(analysisOutput: output)),// ResultView(analysisOutput: output))
     );
   }
 
