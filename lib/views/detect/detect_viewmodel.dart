@@ -113,18 +113,38 @@ class DetectViewModel with ChangeNotifier {
   Future<void> detectWithIsolate(BuildContext context) async {
     isDetecting = true;
     notifyListeners();
+
+    Map<String, double> detectedObjectMap = {"none": 0.0};
+    File detectedImageFile = _imageFile;
+    File croppedImageFile = _imageFile;
     
     final output = await runYoloInferenceInIsolate(ModelType.objectDetection, _imageFile.path, RootIsolateToken.instance!);
+    if (output.containsKey('error')) {
+      debugPrint('Isolate error: ${output['error']}');
+      return;
+    } else {
+      debugPrint('Object detection inference time: ${output['elapsedMilliseconds']}ms');
+    }
+    
+    if (output['classIndex'] != null && output['confidence'] != null) {
+      final String object = LabelService().getObjectLabel(output['classIndex']);
+      final double confidence = output['confidence'];
+      detectedObjectMap = {object: confidence};
+    }
+
+    if (output['normalizedBboxMinmax'] != null) {
+      detectedImageFile = await ImageService().drawBoundingBoxes(_imageFile, output['normalizedBboxMinmax']);
+      croppedImageFile = await ImageService().cropImage(_imageFile, output['normalizedBboxMinmax']);
+    }
 
     isDetecting = false;
     notifyListeners();
 
     if (context.mounted) {
-      final String object = LabelService().getObjectLabel(output['classIndex']);
       goToAnalyzeView(context, {
-        'detectedObjectMap': {object: output['confidence'] as double},
-        'detectedImageFile': await ImageService().drawBoundingBoxes(_imageFile, output['normalizedBboxMinmax']),
-        'croppedImageFile': await ImageService().cropImage(_imageFile, output['normalizedBboxMinmax']),
+        'detectedObjectMap': detectedObjectMap,
+        'detectedImageFile': detectedImageFile,
+        'croppedImageFile': croppedImageFile,
       });
     }
   }

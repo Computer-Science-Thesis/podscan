@@ -13,7 +13,7 @@ class UNetModel extends BaseModel {
 
   @override
   Future<void> runInference({required File imageFile}) async {
-    await super.runInference(imageFile: imageFile);
+    await super.runUnetInference(imageFile: imageFile);
     if (!hasBaseOutput) {
       _normalizedPixelValues = null;
       return;

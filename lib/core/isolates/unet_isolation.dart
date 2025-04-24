@@ -1,51 +1,43 @@
 import 'dart:io';
-import 'dart:isolate';
 import 'package:flutter/services.dart';
+import 'package:podscan/core/isolates/base_isolation.dart';
 import 'package:podscan/core/models/unet_model.dart';
 import 'package:podscan/core/services/model_service.dart';
 
 
-class UNetIsolateParams {
-  final String imagePath;
-  final String? modelPath;
-  final SendPort sendPort;
-  final RootIsolateToken rootIsolateToken;
-
+class UNetIsolateParams extends BaseIsolateParams {
   UNetIsolateParams({
-    required this.imagePath,
-    required this.modelPath,
-    required this.sendPort,
-    required this.rootIsolateToken
+    required super.imagePath,
+    required super.modelPath,
+    required super.sendPort,
+    required super.rootIsolateToken
   });
 }
 
 void unetIsolateEntry(UNetIsolateParams params) async {
-  BackgroundIsolateBinaryMessenger.ensureInitialized(params.rootIsolateToken);
-  if (params.modelPath == null) return;
-  
-  final File imageFile = File(params.imagePath);
-
-  UNetModel model = UNetModel();
-  model.load(modelFile: File(params.modelPath!));
-  await model.runInference(imageFile: imageFile);
-
-  params.sendPort.send({
-    'normalizedPixelValues': model.normalizedPixelValues,
-  });
-
-  model.dispose(); // cleanup
+  await handleIsolateInference(
+    params: params,
+    runModelInference: (params) async {
+      final File imageFile = File(params.imagePath);
+      final UNetModel model = UNetModel();
+      model.load(modelFile: File(params.modelPath!));
+      await model.runInference(imageFile: imageFile);
+      final Map<String, dynamic> result = {
+        'normalizedPixelValues': model.normalizedPixelValues,
+      };
+      model.dispose(); // cleanup
+      return result;
+    });
 }
 
 Future<Map<String, dynamic>> unetInferenceInIsolate(ModelType modelType, String imagePath, RootIsolateToken rootIsolateToken) async {
-  final receivePort = ReceivePort();
-  final isolateParams = UNetIsolateParams(
-    imagePath: imagePath,
-    modelPath: ModelService().getModelPath(modelType),
-    sendPort: receivePort.sendPort,
-    rootIsolateToken: rootIsolateToken,
+  return await runInferenceInIsolate<UNetIsolateParams>(
+    createParams: (sendPort) => UNetIsolateParams(
+      imagePath: imagePath,
+      modelPath: ModelService().getModelPath(modelType),
+      sendPort: sendPort,
+      rootIsolateToken: rootIsolateToken,
+    ),
+    isolateEntry: unetIsolateEntry,
   );
-
-  await Isolate.spawn(unetIsolateEntry, isolateParams);
-
-  return await receivePort.first as Map<String, dynamic>;
 }

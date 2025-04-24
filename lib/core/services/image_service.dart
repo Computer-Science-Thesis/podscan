@@ -22,14 +22,7 @@ class ImageService {
       color: img.ColorUint8.rgb(255, 0, 0), thickness: 5,
     );
 
-    // Save in a temporary directory
-    final Directory tempDir = await getTemporaryDirectory();
-    final String drawnImagePath = '${tempDir.path}/drawn_${DateTime.now().millisecondsSinceEpoch}.jpg';
-
-    final File drawnImageFile = File(drawnImagePath);
-    await drawnImageFile.writeAsBytes(img.encodeJpg(decodedImage));
-
-    return drawnImageFile;
+    return saveToTemporary(decodedImage, "drawn");
   }
 
   Future<File> cropImage(File imageFile, List<double>? normalizedBboxMinmax) async {
@@ -46,11 +39,30 @@ class ImageService {
 
     final img.Image croppedImage = img.copyCrop(decodedImage, x: x, y: y, width: width, height: height);
 
-    final Directory temporaryDirectory = await getTemporaryDirectory();
-    final String croppedImagePath = "${temporaryDirectory.path}/cropped_${DateTime.now().millisecondsSinceEpoch}.jpg";
-    final File croppedImageFile = File(croppedImagePath);
-    await croppedImageFile.writeAsBytes(img.encodeJpg(croppedImage));
-
-    return croppedImageFile;
+    return saveToTemporary(croppedImage, "cropped");
   }
+
+  Future<File?> generateImage(List<List<double>> normalizedPixelValues, int width, int height) async {
+    List<List<double>> nPixVals = normalizedPixelValues;
+
+    final img.Image image = img.Image(width: width, height: height);
+
+    for (int y = 0; y < height; y++) {
+      for (int x = 0; x < width; x++) {
+        final int pixelValue = ((nPixVals[y][x] as num) * 255).clamp(0, 255).toInt();
+        final img.ColorRgb8 pixelColor = img.ColorRgb8(pixelValue, pixelValue, pixelValue);
+        image.setPixel(x, y, pixelColor);
+      }
+    }
+    
+    return saveToTemporary(image, "mask");
+  }
+
+  Future<File> saveToTemporary(img.Image image, String prefix) async {
+    final Directory temporaryDirectory = await getTemporaryDirectory();
+    final String imagePath = "${temporaryDirectory.path}/${prefix}_${DateTime.now().millisecondsSinceEpoch}.jpg";
+    final File imageFile = File(imagePath);
+    await imageFile.writeAsBytes(img.encodeJpg(image));
+    return imageFile;
+  } 
 }

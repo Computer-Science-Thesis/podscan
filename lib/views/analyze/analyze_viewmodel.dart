@@ -6,8 +6,7 @@ import 'package:podscan/core/isolates/unet_isolation.dart';
 import 'package:podscan/core/models/unet_model.dart';
 import 'package:podscan/core/services/label_service.dart';
 import 'package:podscan/core/services/model_service.dart';
-import 'package:podscan/views/home/home_view.dart';
-import '../result/result_view.dart';
+import 'package:podscan/views/result/result_view.dart';
 
 class AnalyzeViewModel with ChangeNotifier {
   late File _croppedImageFile;
@@ -39,31 +38,70 @@ class AnalyzeViewModel with ChangeNotifier {
     isAnalyzing = true;
     notifyListeners();
 
-    final Map<String, dynamic> varietyOutput = await runResNet50InferenceInIsolate(ModelType.variety, _croppedImageFile.path, RootIsolateToken.instance!);
-    final Map<String, dynamic> diseaseOutput = await runResNet50InferenceInIsolate(ModelType.disease, _croppedImageFile.path, RootIsolateToken.instance!);
-    final Map<String, dynamic> diseaseMaskOutput = await unetInferenceInIsolate(ModelType.diseaseMask, _croppedImageFile.path, RootIsolateToken.instance!);
-    final Map<String, dynamic> podMaskOutput = await unetInferenceInIsolate(ModelType.podMask, _croppedImageFile.path, RootIsolateToken.instance!);
+    Map<String, double> varietyMap = {"none": 0.0};
+    Map<String, double> diseaseMap = {"none": 0.0};
+    Map<String, String> pestMap = {"none": "none"};
+    double diseasePercentage = 0.0;
 
+    final Map<String, dynamic> varietyOutput = await runResNet50InferenceInIsolate(ModelType.variety, _croppedImageFile.path, RootIsolateToken.instance!);
+    if (varietyOutput.containsKey('error')) {
+      debugPrint('Isolate error: ${varietyOutput['error']}');
+    } else {
+      debugPrint('Variety classification inference time: ${varietyOutput["elapsedMilliseconds"]}ms');
+      if (varietyOutput['classIndexToConfidenceMap'] != null) {
+        Map<int, double> varietyIndexMap = varietyOutput['classIndexToConfidenceMap'];
+        varietyMap =  _convertMapping(varietyIndexMap, LabelService().getVarietyLabel);
+        varietyMap = _sortMapping(varietyMap);
+      }
+    }
+
+    final Map<String, dynamic> diseaseOutput = await runResNet50InferenceInIsolate(ModelType.disease, _croppedImageFile.path, RootIsolateToken.instance!);
+    if (diseaseOutput.containsKey('error')) {
+      debugPrint('Isolate error: ${diseaseOutput['error']}');
+    } else {
+      debugPrint('Disease classification inference time: ${diseaseOutput["elapsedMilliseconds"]}ms');
+      if (diseaseOutput['classIndexToConfidenceMap'] != null) {
+        Map<int, double> diseaseIndexMap = diseaseOutput['classIndexToConfidenceMap'];
+        diseaseMap = _convertMapping(diseaseIndexMap, LabelService().getDiseaseLabel);
+        diseaseMap = _sortMapping(diseaseMap);
+        pestMap = _extractPest(diseaseMap.keys.toList());
+      }
+    }
+
+    if (diseaseMap.entries.first.key != 'Healthy') {
+      List<List<double>>? diseaseMask;
+      List<List<double>>? podMask;
+      final Map<String, dynamic> diseaseMaskOutput = await unetInferenceInIsolate(ModelType.diseaseMask, _croppedImageFile.path, RootIsolateToken.instance!);
+      if (diseaseMaskOutput.containsKey('error')) {
+        debugPrint('Isolate error: ${diseaseMaskOutput['error']}');
+      } else {
+        debugPrint('Disease segmentation inference time: ${diseaseMaskOutput["elapsedMilliseconds"]}ms');
+        if (diseaseMaskOutput['normalizedPixelValues'] != null) {
+          diseaseMask = diseaseMaskOutput['normalizedPixelValues'] as List<List<double>>;
+        }
+      }
+
+      final Map<String, dynamic> podMaskOutput = await unetInferenceInIsolate(ModelType.podMask, _croppedImageFile.path, RootIsolateToken.instance!);
+      if (podMaskOutput.containsKey('error')) {
+        debugPrint('Isolate error: ${podMaskOutput['error']}');
+      } else {
+        debugPrint('Pod segmentation inference time: ${podMaskOutput["elapsedMilliseconds"]}ms');
+        if (podMaskOutput['normalizedPixelValues'] != null) {
+          podMask = podMaskOutput['normalizedPixelValues'] as List<List<double>>;
+        }
+      }
+      
+      diseasePercentage = UNetModel.podDiseaseIntersectionRatio(
+        targetMask: diseaseMask,
+        referenceMask: podMask
+      );
+    }
+    
     isAnalyzing = false;
     notifyListeners();
 
     if (context.mounted) {
-      Map<int, double> diseaseIndexMap = diseaseOutput['classIndexToConfidenceMap'];
-      Map<int, double> varietyIndexMap = varietyOutput['classIndexToConfidenceMap'];
-      final List<List<double>> diseaseMask = diseaseMaskOutput['normalizedPixelValues'];
-      final List<List<double>> podMask = podMaskOutput['normalizedPixelValues'];
-      double diseasePercentage = 0;
-
-      Map<String, double> diseaseMap = _convertMapping(diseaseIndexMap, LabelService().getDiseaseLabel);
-      diseaseMap = _sortMapping(diseaseMap);
-      Map<String, double> varietyMap =  _convertMapping(varietyIndexMap, LabelService().getVarietyLabel);
-      varietyMap = _sortMapping(varietyMap);
-      Map<String, String> pestMap = _extractPest(diseaseMap.keys.toList());
-      diseasePercentage = UNetModel.podDiseaseIntersectionRatio(targetMask: diseaseMask, referenceMask: podMask);
-      debugPrint(diseaseMap.toString());
-      debugPrint(varietyMap.toString());
-      debugPrint(diseasePercentage.toStringAsFixed(2));
-
+      
       goToResultView(context, {
         'analyzedImageFile': _drawnImageFile,
         'diseaseMap': diseaseMap,

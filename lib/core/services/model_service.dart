@@ -22,7 +22,7 @@ extension ModelTypeExtension on ModelType {
       case ModelType.objectDetection:
         return "assets/models/yolov5s/object_model.tflite";
       case ModelType.diseaseMask:
-        return "assets/models/unet/disease_mask.tflite";
+        return "assets/models/unet/OptimizedUNet.tflite";
       case ModelType.podMask:
         return "assets/models/unet/pod_mask.tflite";
     }

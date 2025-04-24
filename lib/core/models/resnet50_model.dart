@@ -1,7 +1,4 @@
 import 'dart:io';
-import 'package:flutter/services.dart';
-import 'package:image/image.dart' as img;
-import 'package:path_provider/path_provider.dart';
 import 'package:podscan/core/models/base_model.dart';
 
 class ResNet50Model extends BaseModel {
