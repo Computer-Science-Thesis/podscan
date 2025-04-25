@@ -203,7 +203,7 @@ class _AnalyzeViewBody extends StatelessWidget {
       style: ElevatedButton.styleFrom(
         backgroundColor: const Color(0xFF628E6E),
         foregroundColor: Colors.white,
-        minimumSize: const Size(150, 50),
+        minimumSize: const Size(0, 50),
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(10.0),
         ),
@@ -229,7 +229,7 @@ class _AnalyzeViewBody extends StatelessWidget {
       style: ElevatedButton.styleFrom(
         backgroundColor: buttonColor,
         foregroundColor: buttonTextColor,
-        minimumSize: const Size(200, 50),
+        minimumSize: const Size(0, 50),
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(buttonBorderRadius),
         ),
@@ -249,15 +249,27 @@ class _AnalyzeViewBody extends StatelessWidget {
   }
 
   Widget _buildActionButtons(AnalyzeViewModel viewModel, BuildContext context) {
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.center,
-      children: [
-        _buildRetryButton(viewModel, context),
-        if (viewModel.detectedObject == 'cacao')...[
-          const SizedBox(width: 15),
-          _buildAnalyzeButton(viewModel, context)
-        ],
-      ],
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        double buttonWidth = (constraints.maxWidth - 15) / 2;
+
+        return Wrap(
+          alignment: WrapAlignment.center,
+          spacing: 15,
+          runSpacing: 10,
+          children: [
+            SizedBox(
+              width: viewModel.detectedObject == 'cacao' ? buttonWidth : constraints.maxWidth,
+              child: _buildRetryButton(viewModel, context),
+            ),
+            if (viewModel.detectedObject == 'cacao')
+              SizedBox(
+                width: buttonWidth,
+                child: _buildAnalyzeButton(viewModel, context),
+              ),
+          ],
+        );
+      },
     );
   }
 
