@@ -71,7 +71,7 @@ class AnalyzeViewModel with ChangeNotifier {
     if (diseaseMap.entries.first.key != 'Healthy') {
       List<List<double>>? diseaseMask;
       List<List<double>>? podMask;
-      final Map<String, dynamic> diseaseMaskOutput = await unetInferenceInIsolate(ModelType.diseaseMask, _croppedImageFile.path, RootIsolateToken.instance!);
+      final Map<String, dynamic> diseaseMaskOutput = await runUNetInferenceInIsolate(ModelType.diseaseMask, _croppedImageFile.path, RootIsolateToken.instance!);
       if (diseaseMaskOutput.containsKey('error')) {
         debugPrint('Isolate error: ${diseaseMaskOutput['error']}');
       } else {
@@ -81,7 +81,7 @@ class AnalyzeViewModel with ChangeNotifier {
         }
       }
 
-      final Map<String, dynamic> podMaskOutput = await unetInferenceInIsolate(ModelType.podMask, _croppedImageFile.path, RootIsolateToken.instance!);
+      final Map<String, dynamic> podMaskOutput = await runUNetInferenceInIsolate(ModelType.podMask, _croppedImageFile.path, RootIsolateToken.instance!);
       if (podMaskOutput.containsKey('error')) {
         debugPrint('Isolate error: ${podMaskOutput['error']}');
       } else {

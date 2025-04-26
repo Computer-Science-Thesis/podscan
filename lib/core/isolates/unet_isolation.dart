@@ -30,7 +30,7 @@ void unetIsolateEntry(UNetIsolateParams params) async {
     });
 }
 
-Future<Map<String, dynamic>> unetInferenceInIsolate(ModelType modelType, String imagePath, RootIsolateToken rootIsolateToken) async {
+Future<Map<String, dynamic>> runUNetInferenceInIsolate(ModelType modelType, String imagePath, RootIsolateToken rootIsolateToken) async {
   return await runInferenceInIsolate<UNetIsolateParams>(
     createParams: (sendPort) => UNetIsolateParams(
       imagePath: imagePath,
