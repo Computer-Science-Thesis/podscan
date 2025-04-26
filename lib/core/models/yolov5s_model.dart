@@ -26,46 +26,51 @@ class YoloV5sModel extends BaseModel {
       return;
     }
 
-    List<List<double>> allBoxes = [];
+    int bestBoxIndex = -1;
+    int bestClassIndex = -1;
+    double bestConfidence = -1.0;
 
-    for (List<double> prediction in baseOutput![0]) {
-      final double normalizedXCenter = prediction[0];
-      final double normalizedYCenter = prediction[1];
-      final double normalizedWidth = prediction[2];
-      final double normalizedHeight = prediction[3];
-      final double confidence = prediction[4];
-      final List<double> classProbabilities = prediction.sublist(5);
+    List<List<double>> predictions = baseOutput![0];
+    for (int i = 0; i < predictions.length; i++) {
+      final double confidence = predictions[i][4];
+      final List<double> classProbabilities = predictions[i].sublist(5);
 
-      final int classIndex = classProbabilities.indexOf(
-        classProbabilities.reduce((a, b) => a > b ? a : b)
-      );
-      final double classConfidence = classProbabilities[classIndex];
+      double maxClassConfidence = -1.0;
+      int classIndex = -1;
+      for (int i = 0; i < classProbabilities.length; i++) {
+        if (classProbabilities[i] > maxClassConfidence) {
+          maxClassConfidence = classProbabilities[i];
+          classIndex = i;
+        }
+      }
 
-      if (confidence <= confidenceThreshold || classConfidence <= nmsIouThreshold) continue;
+      if (confidence <= confidenceThreshold || maxClassConfidence <= nmsIouThreshold) continue;
 
-      final double normalizedXMin = normalizedXCenter - normalizedWidth / 2;
-      final double normalizedYMin = normalizedYCenter - normalizedHeight / 2;
-      final double normalizedXMax = normalizedXCenter + normalizedWidth / 2;
-      final double normalizedYMax = normalizedYCenter + normalizedHeight / 2;
+      final double finalConfidence = confidence * maxClassConfidence;
+
+      if (finalConfidence > bestConfidence) {
+        bestBoxIndex = i;
+        bestClassIndex = classIndex;
+        bestConfidence = finalConfidence;
+      }
       
-      allBoxes.add([
-        normalizedXMin, normalizedYMin, normalizedXMax, normalizedYMax,
-        confidence * classConfidence,
-        classIndex.toDouble(),
-      ]);
     }
 
-    if (allBoxes.isEmpty) {
+    if (bestConfidence == -1.0) {
       _normalizedBboxMinmax = null;
       _detectedObjectConfidence = null;
       _detectedObjectIndex = null;
       return;
     }
 
-    List<double> output = allBoxes.reduce((a, b) => a[4] > b[4] ? a : b);
-    _normalizedBboxMinmax = output.sublist(0, 4);
-    _detectedObjectConfidence = output[4];
-    _detectedObjectIndex = output[5].toInt();
+    final double normalizedXMin = predictions[bestBoxIndex][0] - predictions[bestBoxIndex][2] / 2;
+    final double normalizedYMin = predictions[bestBoxIndex][1] - predictions[bestBoxIndex][3] / 2;
+    final double normalizedXMax = predictions[bestBoxIndex][0] + predictions[bestBoxIndex][2] / 2;
+    final double normalizedYMax = predictions[bestBoxIndex][1] + predictions[bestBoxIndex][3] / 2;
+
+    _normalizedBboxMinmax = [normalizedXMin, normalizedYMin, normalizedXMax, normalizedYMax];
+    _detectedObjectConfidence = bestConfidence;
+    _detectedObjectIndex = bestClassIndex.toInt();
   }
 
   @override

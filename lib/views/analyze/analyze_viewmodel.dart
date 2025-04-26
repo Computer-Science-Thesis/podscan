@@ -35,15 +35,27 @@ class AnalyzeViewModel with ChangeNotifier {
 
 
   Future<void> analyzeWithIsolate(BuildContext context) async {
+    final stopWatch = Stopwatch()..start();
+
     isAnalyzing = true;
     notifyListeners();
 
     Map<String, double> varietyMap = {"none": 0.0};
     Map<String, double> diseaseMap = {"none": 0.0};
     Map<String, String> pestMap = {"none": "none"};
+    List<List<double>>? diseaseMask;
+    List<List<double>>? podMask;
     double diseasePercentage = 0.0;
 
-    final Map<String, dynamic> varietyOutput = await runResNet50InferenceInIsolate(ModelType.variety, _croppedImageFile.path, RootIsolateToken.instance!);
+    // Start classification inference tasks in parallel
+    final List<Map<String, dynamic>> firstFutures = await Future.wait([
+      runResNet50InferenceInIsolate(ModelType.variety, _croppedImageFile.path, RootIsolateToken.instance!),
+      runUNetInferenceInIsolate(ModelType.podMask, _croppedImageFile.path, RootIsolateToken.instance!)
+    ]);
+
+    final Map<String, dynamic> varietyOutput = firstFutures[0];
+    final Map<String, dynamic> podMaskOutput = firstFutures[1];
+
     if (varietyOutput.containsKey('error')) {
       debugPrint('Isolate error: ${varietyOutput['error']}');
     } else {
@@ -55,7 +67,24 @@ class AnalyzeViewModel with ChangeNotifier {
       }
     }
 
-    final Map<String, dynamic> diseaseOutput = await runResNet50InferenceInIsolate(ModelType.disease, _croppedImageFile.path, RootIsolateToken.instance!);
+    if (podMaskOutput.containsKey('error')) {
+      debugPrint('Isolate error: ${podMaskOutput['error']}');
+    } else {
+      debugPrint('Pod segmentation inference time: ${podMaskOutput["elapsedMilliseconds"]}ms');
+      if (podMaskOutput['normalizedPixelValues'] != null) {
+        podMask = podMaskOutput['normalizedPixelValues'] as List<List<double>>;
+      }
+    }
+
+      // Start segmentation inference tasks in parallel
+      final List<Map<String, dynamic>> secondFutures = await Future.wait([
+        runResNet50InferenceInIsolate(ModelType.disease, _croppedImageFile.path, RootIsolateToken.instance!),
+        runUNetInferenceInIsolate(ModelType.diseaseMask, _croppedImageFile.path, RootIsolateToken.instance!)
+      ]);
+
+    final Map<String, dynamic> diseaseOutput = secondFutures[0];
+    final Map<String, dynamic> diseaseMaskOutput = secondFutures[1];
+
     if (diseaseOutput.containsKey('error')) {
       debugPrint('Isolate error: ${diseaseOutput['error']}');
     } else {
@@ -68,34 +97,23 @@ class AnalyzeViewModel with ChangeNotifier {
       }
     }
 
-    if (diseaseMap.entries.first.key != 'Healthy') {
-      List<List<double>>? diseaseMask;
-      List<List<double>>? podMask;
-      final Map<String, dynamic> diseaseMaskOutput = await runUNetInferenceInIsolate(ModelType.diseaseMask, _croppedImageFile.path, RootIsolateToken.instance!);
-      if (diseaseMaskOutput.containsKey('error')) {
-        debugPrint('Isolate error: ${diseaseMaskOutput['error']}');
-      } else {
-        debugPrint('Disease segmentation inference time: ${diseaseMaskOutput["elapsedMilliseconds"]}ms');
-        if (diseaseMaskOutput['normalizedPixelValues'] != null) {
-          diseaseMask = diseaseMaskOutput['normalizedPixelValues'] as List<List<double>>;
-        }
+    if (diseaseMaskOutput.containsKey('error')) {
+      debugPrint('Isolate error: ${diseaseMaskOutput['error']}');
+    } else {
+      debugPrint('Disease segmentation inference time: ${diseaseMaskOutput["elapsedMilliseconds"]}ms');
+      if (diseaseMaskOutput['normalizedPixelValues'] != null) {
+        diseaseMask = diseaseMaskOutput['normalizedPixelValues'] as List<List<double>>;
       }
-
-      final Map<String, dynamic> podMaskOutput = await runUNetInferenceInIsolate(ModelType.podMask, _croppedImageFile.path, RootIsolateToken.instance!);
-      if (podMaskOutput.containsKey('error')) {
-        debugPrint('Isolate error: ${podMaskOutput['error']}');
-      } else {
-        debugPrint('Pod segmentation inference time: ${podMaskOutput["elapsedMilliseconds"]}ms');
-        if (podMaskOutput['normalizedPixelValues'] != null) {
-          podMask = podMaskOutput['normalizedPixelValues'] as List<List<double>>;
-        }
-      }
-      
-      diseasePercentage = UNetModel.podDiseaseIntersectionRatio(
-        targetMask: diseaseMask,
-        referenceMask: podMask
-      );
     }
+    
+    diseasePercentage = UNetModel.podDiseaseIntersectionRatio(
+      targetMask: diseaseMask,
+      referenceMask: podMask
+    );
+
+    stopWatch.stop();
+
+    debugPrint('Total analysis process time: ${stopWatch.elapsedMilliseconds}ms');
     
     isAnalyzing = false;
     notifyListeners();

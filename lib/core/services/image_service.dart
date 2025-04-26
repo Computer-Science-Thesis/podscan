@@ -1,16 +1,26 @@
 import 'dart:io';
 import 'dart:typed_data';
+import 'package:flutter/foundation.dart' show compute;
 import 'package:image/image.dart' as img;
 import 'package:path_provider/path_provider.dart';
 
 class ImageService {
-  Future<File> drawBoundingBoxes(File imageFile, List<double>? normalizedBboxMinmax) async {
-    if (normalizedBboxMinmax == null) return imageFile;
+  Future<File?> drawBoundingBoxes(Uint8List imageBytes, List<double>? normalizedBboxMinmax) async {
+    if (normalizedBboxMinmax == null) return null;
 
-    final Uint8List imageBytes = imageFile.readAsBytesSync();
-    final img.Image decodedImage = img.decodeImage(imageBytes)!;
+    final Map<String, dynamic> args = {
+      'imageBytes': imageBytes,
+      'bbox': normalizedBboxMinmax,
+    };
 
-    final List<double> bbox = normalizedBboxMinmax;
+    final Uint8List drawnImageEncodedBytes = await compute(_drawBoundingBoxesIsolate, args);
+    return saveEncodedJpgTemporary(drawnImageEncodedBytes, "drawn");
+  }
+
+  Uint8List _drawBoundingBoxesIsolate(Map<String, dynamic> args) {
+    final img.Image decodedImage = img.decodeImage(args['imageBytes'])!;
+
+    final List<double> bbox = args['bbox'];
     final int xmin = (bbox[0] * decodedImage.width).toInt();
     final int ymin = (bbox[1] * decodedImage.height).toInt();
     final int xmax = (bbox[2] * decodedImage.width).toInt();
@@ -22,24 +32,32 @@ class ImageService {
       color: img.ColorUint8.rgb(255, 0, 0), thickness: 5,
     );
 
-    return saveToTemporary(decodedImage, "drawn");
+    return Uint8List.fromList(img.encodeJpg(decodedImage));
   }
 
-  Future<File> cropImage(File imageFile, List<double>? normalizedBboxMinmax) async {
-    if (normalizedBboxMinmax == null) return imageFile;
+  Future<File?> cropImage(Uint8List imageBytes, List<double>? normalizedBboxMinmax) async {
+    if (normalizedBboxMinmax == null) return null;
 
-    final Uint8List imageBytes = await imageFile.readAsBytes();
-    final img.Image decodedImage = img.decodeImage(imageBytes)!;
+    final Map<String, dynamic> args = {
+      'imageBytes': imageBytes,
+      'bbox': normalizedBboxMinmax,
+    };
 
-    final List<double> bb = normalizedBboxMinmax;
+    final Uint8List croppedImageEncodedBytes = await compute(_cropImageIsolate, args);
+    return saveEncodedJpgTemporary(croppedImageEncodedBytes, "cropped");
+  }
+
+  Uint8List _cropImageIsolate(Map<String, dynamic> args) {
+    final img.Image decodedImage = img.decodeImage(args['imageBytes'])!;
+
+    final List<double> bb = args['bbox'];
     final int x = (bb[0] * decodedImage.width).toInt().clamp(0, decodedImage.width - 1);
     final int y = (bb[1] * decodedImage.height).toInt().clamp(0, decodedImage.height - 1);
     final int width = ((bb[2] - bb[0]) * decodedImage.width).toInt().clamp(1, decodedImage.width - x);
     final int height = ((bb[3] - bb[1]) * decodedImage.height).toInt().clamp(1, decodedImage.height - y);
 
     final img.Image croppedImage = img.copyCrop(decodedImage, x: x, y: y, width: width, height: height);
-
-    return saveToTemporary(croppedImage, "cropped");
+    return Uint8List.fromList(img.encodeJpg(croppedImage));
   }
 
   Future<File?> generateImage(List<List<double>> normalizedPixelValues, int width, int height) async {
@@ -55,14 +73,14 @@ class ImageService {
       }
     }
     
-    return saveToTemporary(image, "mask");
+    return saveEncodedJpgTemporary(img.encodeJpg(image), "mask");
   }
 
-  Future<File> saveToTemporary(img.Image image, String prefix) async {
+  Future<File> saveEncodedJpgTemporary(Uint8List encodedJpgImage, String prefix) async {
     final Directory temporaryDirectory = await getTemporaryDirectory();
     final String imagePath = "${temporaryDirectory.path}/${prefix}_${DateTime.now().millisecondsSinceEpoch}.jpg";
     final File imageFile = File(imagePath);
-    await imageFile.writeAsBytes(img.encodeJpg(image));
+    await imageFile.writeAsBytes(encodedJpgImage);
     return imageFile;
   } 
 }
