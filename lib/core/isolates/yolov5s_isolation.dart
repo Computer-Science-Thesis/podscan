@@ -38,7 +38,11 @@ void yoloIsolateEntry(YoloV5sIsolateParams params) async {
   });
 }
 
-Future<Map<String, dynamic>> runYoloInferenceInIsolate(ModelType modelType, String imagePath, RootIsolateToken rootIsolateToken) async {
+Future<InferenceIsolate<YoloV5sIsolateParams>> runYoloInferenceInIsolate(
+  ModelType modelType,
+  String imagePath,
+  RootIsolateToken rootIsolateToken
+) async {
   return await runInferenceInIsolate<YoloV5sIsolateParams>(
     createParams: (sendPort) => YoloV5sIsolateParams(
       imagePath: imagePath,

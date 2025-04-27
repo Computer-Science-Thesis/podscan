@@ -25,20 +25,28 @@ class _DetectViewBody extends StatelessWidget {
     final viewModel = context.watch<DetectViewModel>();
     final screenHeight = MediaQuery.of(context).size.height;
 
-    return Scaffold(
-      backgroundColor: const Color(0xFF832637), // Match splash screen
-      body: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 0.0),
-        child: SingleChildScrollView(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              _buildHeader(),
-              const SizedBox(height: 10),
-              _buildImageContainer(viewModel, screenHeight),
-              const SizedBox(height: 20),
-              _buildAnalyzeButton(viewModel, context),
-            ],
+    return PopScope(
+      canPop: false,
+      onPopInvokedWithResult: (didPop, result) async {
+        if (didPop) return;
+        final shouldPop = await viewModel.showBackConfirmationDialog(context);
+        if (shouldPop) viewModel.goBack(context);
+      },
+      child: Scaffold(
+        backgroundColor: const Color(0xFF832637), // Match splash screen
+        body: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 0.0),
+          child: SingleChildScrollView(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                _buildHeader(),
+                const SizedBox(height: 10),
+                _buildImageContainer(viewModel, screenHeight),
+                const SizedBox(height: 20),
+                _buildAnalyzeButton(viewModel, context),
+              ],
+            ),
           ),
         ),
       ),

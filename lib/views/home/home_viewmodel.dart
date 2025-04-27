@@ -32,16 +32,14 @@ class HomeViewModel with ChangeNotifier {
   }
 
     Future<bool> showExitConfirmationDialog(BuildContext context) async {
-    return await showDialog(
+    return (await showDialog(
           context: context,
           builder: (context) => AlertDialog(
             title: Text("Confirm Exit"),
-            content: Text(
-                "Closing the app will end your session. Do you want to continue?"),
+            content: Text("Closing the app will end your session. Do you want to continue?"),
             actions: [
               TextButton(
-                onPressed: () =>
-                    Navigator.of(context).pop(false), // Stay in app
+                onPressed: () =>Navigator.of(context).pop(false), // Stay in app
                 child: Text("Cancel"),
               ),
               TextButton(
@@ -50,7 +48,12 @@ class HomeViewModel with ChangeNotifier {
               ),
             ],
           ),
-        ) ?? false; // Default to false if dialog is dismissed
+        )) ?? false; // Default to false if dialog is dismissed
+  }
+
+  void exit(BuildContext context) {
+    debugPrint("Exiting...");
+    Navigator.of(context).pop();
   }
 
   void goToDetectView(File imageFile, BuildContext context) {

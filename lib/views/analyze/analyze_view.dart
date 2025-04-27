@@ -24,22 +24,30 @@ class _AnalyzeViewBody extends StatelessWidget {
     final screenHeight = MediaQuery.of(context).size.height;
     final viewModel = context.watch<AnalyzeViewModel>();
 
-    return Scaffold(
-      backgroundColor: const Color(0xFF832637),
-      body: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 0.0),
-        child: SingleChildScrollView(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              _buildHeader(),
-              const SizedBox(height: 10),
-              _buildImageContainer(viewModel, screenHeight),
-              const SizedBox(height: 5),
-              _buildMessage(viewModel),
-              const SizedBox(height: 20),
-              _buildActionButtons(viewModel, context),
-            ],
+    return PopScope(
+      canPop: false,
+      onPopInvokedWithResult: (didPop, result) async {
+        if (didPop) return;
+        final shouldPop = await viewModel.showBackConfirmationDialog(context);
+        if (context.mounted && shouldPop) viewModel.goBack(context);
+      },
+      child: Scaffold(
+        backgroundColor: const Color(0xFF832637),
+        body: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 0.0),
+          child: SingleChildScrollView(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                _buildHeader(),
+                const SizedBox(height: 10),
+                _buildImageContainer(viewModel, screenHeight),
+                const SizedBox(height: 5),
+                _buildMessage(viewModel),
+                const SizedBox(height: 20),
+                _buildActionButtons(viewModel, context),
+              ],
+            ),
           ),
         ),
       ),
@@ -209,7 +217,10 @@ class _AnalyzeViewBody extends StatelessWidget {
         ),
         elevation: 5,
       ),
-      onPressed: () => viewModel.goBack(context),
+      onPressed: () async {
+        final shouldGoBack = await viewModel.showBackConfirmationDialog(context);
+        if (context.mounted && shouldGoBack) viewModel.goBack(context);
+      },
       child: const Text(
         'Retry',
         style: TextStyle(

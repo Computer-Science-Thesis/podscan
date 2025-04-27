@@ -20,9 +20,12 @@ class _HomeViewBody extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final HomeViewModel viewModel = context.watch<HomeViewModel>();
-    return WillPopScope(
-      onWillPop: () async {
-        return await viewModel.showExitConfirmationDialog(context);
+    return PopScope(
+      canPop: false,
+      onPopInvokedWithResult: (didPop, result) async {
+        if (didPop) return;
+        final shouldPop = await viewModel.showExitConfirmationDialog(context);
+        if (context.mounted && shouldPop) viewModel.exit(context);
       },
       child: Scaffold(
         body: _buildBody(viewModel, context),
