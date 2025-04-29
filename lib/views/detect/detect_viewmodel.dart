@@ -1,8 +1,7 @@
 import 'dart:io';
+import 'dart:typed_data';
 import 'dart:ui';
-import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
-import 'package:podscan/core/isolates/base_isolation.dart';
 import 'package:podscan/core/services/image_service.dart';
 import 'package:podscan/core/services/label_service.dart';
 import 'package:podscan/core/isolates/yolov5s_isolation.dart';
@@ -13,8 +12,6 @@ class DetectViewModel with ChangeNotifier {
   late File _imageFile;
   bool isDetecting = false;
 
-  InferenceIsolate? _inferenceIsolate;
-
   File get imageFile => _imageFile;
 
   DetectViewModel({required File imageFile}) {
@@ -22,52 +19,39 @@ class DetectViewModel with ChangeNotifier {
   }
 
   Future<void> detectWithIsolate(BuildContext context) async {
-    final stopWatch = Stopwatch()..start();
-
     isDetecting = true;
     notifyListeners();
 
     Map<String, double> detectedObjectMap = {"none": 0.0};
     File detectedImageFile = _imageFile;
     File croppedImageFile = _imageFile;
-
-    try {
-      _inferenceIsolate = await runYoloInferenceInIsolate(ModelType.objectDetection, _imageFile.path, RootIsolateToken.instance!);
-      final objectDetectionOutput = await _inferenceIsolate!.result;
-
-      if (objectDetectionOutput.containsKey('error')) {
-        debugPrint('Isolate error: ${objectDetectionOutput['error']}');
-        return;
-      } else {
-        debugPrint('Object detection inference time: ${objectDetectionOutput['elapsedMilliseconds']}ms');
-      }
-      
-      if (objectDetectionOutput['classIndex'] != null && objectDetectionOutput['confidence'] != null) {
-        final String object = LabelService().getObjectLabel(objectDetectionOutput['classIndex']);
-        final double confidence = objectDetectionOutput['confidence'];
-        detectedObjectMap = {object: confidence};
-      }
-
-      if (objectDetectionOutput['normalizedBboxMinmax'] != null) {
-        final Uint8List imageBytes = await _imageFile.readAsBytes();
-        final List<File?> imageFutures = await Future.wait([
-          ImageService().drawBoundingBoxes(imageBytes, objectDetectionOutput['normalizedBboxMinmax']),
-          ImageService().cropImage(imageBytes, objectDetectionOutput['normalizedBboxMinmax'])
-        ]);
-        detectedImageFile = imageFutures[0] ?? _imageFile;
-        croppedImageFile = imageFutures[1] ?? _imageFile;
-      }
-      
-    } catch (e) {
-      debugPrint("Error during detection: $e");
-    } finally {
-      stopWatch.stop();
-      debugPrint("Total detection process time: ${stopWatch.elapsedMilliseconds}ms");
-
-      isDetecting = false;
-      _inferenceIsolate = null;
-      notifyListeners();
+    
+    final output = await runYoloInferenceInIsolate(ModelType.objectDetection, _imageFile.path, RootIsolateToken.instance!);
+    if (output.containsKey('error')) {
+      debugPrint('Isolate error: ${output['error']}');
+      return;
+    } else {
+      debugPrint('Object detection inference time: ${output['elapsedMilliseconds']}ms');
     }
+    
+    if (output['classIndex'] != null && output['confidence'] != null) {
+      final String object = LabelService().getObjectLabel(output['classIndex']);
+      final double confidence = output['confidence'];
+      detectedObjectMap = {object: confidence};
+    }
+
+    if (output['normalizedBboxMinmax'] != null) {
+      final Uint8List imageBytes = await _imageFile.readAsBytes();
+      final List<File?> imageFutures = await Future.wait([
+        ImageService().drawBoundingBoxes(imageBytes, output['normalizedBboxMinmax']),
+        ImageService().cropImage(imageBytes, output['normalizedBboxMinmax'])
+      ]);
+      detectedImageFile = imageFutures[0] ?? _imageFile; 
+      croppedImageFile = imageFutures[1] ?? _imageFile; 
+    }
+
+    isDetecting = false;
+    notifyListeners();
 
     if (context.mounted) {
       goToAnalyzeView(context, {
@@ -110,11 +94,7 @@ class DetectViewModel with ChangeNotifier {
   }
 
   void goBack(BuildContext context) {
-    debugPrint("Killing running isolate...");
-    _inferenceIsolate?.stop();
-    _inferenceIsolate = null;
-
-    debugPrint("Going back...");
+    debugPrint("Going Back...");
     Navigator.of(context).pop();
   }
 

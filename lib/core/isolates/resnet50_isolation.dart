@@ -30,11 +30,7 @@ void resNet50IsolateEntry(ResNet50IsolateParams params) async {
     });
 }
 
-Future<InferenceIsolate<ResNet50IsolateParams>> runResNet50InferenceInIsolate(
-  ModelType modelType,
-  String imagePath,
-  RootIsolateToken rootIsolateToken
-) async {
+Future<Map<String, dynamic>> runResNet50InferenceInIsolate(ModelType modelType, String imagePath, RootIsolateToken rootIsolateToken) async {
   return await runInferenceInIsolate<ResNet50IsolateParams>(
     createParams: (sendPort) => ResNet50IsolateParams(
       imagePath: imagePath,

@@ -1,7 +1,6 @@
 import 'dart:io';
 import 'dart:ui';
 import 'package:flutter/material.dart';
-import 'package:podscan/core/isolates/base_isolation.dart';
 import 'package:podscan/core/isolates/resnet50_isolation.dart';
 import 'package:podscan/core/isolates/unet_isolation.dart';
 import 'package:podscan/core/models/unet_model.dart';
@@ -15,8 +14,6 @@ class AnalyzeViewModel with ChangeNotifier {
   late String _detectedObject;
   late double _confidenceScore;
   bool isAnalyzing = false;
-
-  final List<InferenceIsolate> _runningIsolates = [];
 
   File get drawnImageFile => _drawnImageFile;
   String get detectedObject => _detectedObject;
@@ -50,22 +47,14 @@ class AnalyzeViewModel with ChangeNotifier {
     List<List<double>>? podMask;
     double diseasePercentage = 0.0;
 
-    // First half
-    final List<InferenceIsolate> firstIsolates = await Future.wait([
+    // Start classification inference tasks in parallel
+    final List<Map<String, dynamic>> firstFutures = await Future.wait([
       runResNet50InferenceInIsolate(ModelType.variety, _croppedImageFile.path, RootIsolateToken.instance!),
       runUNetInferenceInIsolate(ModelType.podMask, _croppedImageFile.path, RootIsolateToken.instance!)
     ]);
 
-    _runningIsolates.addAll(firstIsolates);
-
-    final List<Map<String, dynamic>> firstResults = await Future.wait(
-      firstIsolates.map((isolate) => isolate.result)
-    );
-
-    if (!context.mounted) return;
-
-    final Map<String, dynamic> varietyOutput = firstResults[0];
-    final Map<String, dynamic> podMaskOutput = firstResults[1];
+    final Map<String, dynamic> varietyOutput = firstFutures[0];
+    final Map<String, dynamic> podMaskOutput = firstFutures[1];
 
     if (varietyOutput.containsKey('error')) {
       debugPrint('Isolate error: ${varietyOutput['error']}');
@@ -87,22 +76,14 @@ class AnalyzeViewModel with ChangeNotifier {
       }
     }
 
-    // Second half
-    final List<InferenceIsolate> secondIsolates = await Future.wait([
-      runResNet50InferenceInIsolate(ModelType.disease, _croppedImageFile.path, RootIsolateToken.instance!),
-      runUNetInferenceInIsolate(ModelType.diseaseMask, _croppedImageFile.path, RootIsolateToken.instance!)
-    ]);
+      // Start segmentation inference tasks in parallel
+      final List<Map<String, dynamic>> secondFutures = await Future.wait([
+        runResNet50InferenceInIsolate(ModelType.disease, _croppedImageFile.path, RootIsolateToken.instance!),
+        runUNetInferenceInIsolate(ModelType.diseaseMask, _croppedImageFile.path, RootIsolateToken.instance!)
+      ]);
 
-    _runningIsolates.addAll(firstIsolates);
-
-    final List<Map<String, dynamic>> secondResults = await Future.wait(
-      secondIsolates.map((isolate) => isolate.result)
-    );
-
-    if (context.mounted) return;
-
-    final Map<String, dynamic> diseaseOutput = secondResults[0];
-    final Map<String, dynamic> diseaseMaskOutput = secondResults[1];
+    final Map<String, dynamic> diseaseOutput = secondFutures[0];
+    final Map<String, dynamic> diseaseMaskOutput = secondFutures[1];
 
     if (diseaseOutput.containsKey('error')) {
       debugPrint('Isolate error: ${diseaseOutput['error']}');
@@ -202,14 +183,7 @@ class AnalyzeViewModel with ChangeNotifier {
     return shouldExit ?? false;
   }
 
-
   void goBack(BuildContext context) {
-    debugPrint("Killing all running isolates...");
-    for (final isolate in _runningIsolates) {
-      isolate.stop();
-    }
-    _runningIsolates.clear();
-
     debugPrint("Going Back...");
     Navigator.of(context).pop();
   }
@@ -217,7 +191,7 @@ class AnalyzeViewModel with ChangeNotifier {
   void goToResultView(BuildContext context, Map<String, dynamic> output) {
     debugPrint("Going to Result View...");
     Navigator.of(context).pushReplacement(
-      MaterialPageRoute(builder: (_) => ResultView(analysisOutput: output))
+      MaterialPageRoute(builder: (_) => ResultView(analysisOutput: output)),// ResultView(analysisOutput: output))
     );
   }
 

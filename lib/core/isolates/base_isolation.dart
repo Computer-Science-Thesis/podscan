@@ -35,29 +35,12 @@ Future<void> handleIsolateInference<T>({
   }
 }
 
-class InferenceIsolate<T> {
-  final Future<Map<String, dynamic>> result;
-  final Isolate isolate;
-
-  InferenceIsolate({required this.result, required this.isolate});
-
-  void stop() {
-    isolate.kill(priority: Isolate.immediate);
-  }
-}
-
-Future<InferenceIsolate<T>> runInferenceInIsolate<T>({
+Future<Map<String, dynamic>> runInferenceInIsolate<T>({
   required T Function(SendPort sendPort) createParams,
-  required void Function(T) isolateEntry
+  required void Function(T) isolateEntry,
 }) async {
   final receivePort = ReceivePort();
   final params = createParams(receivePort.sendPort);
-
-  final isolate = await Isolate.spawn<T>(isolateEntry, params);
-  final resultFuture = receivePort.first.then((value) {
-    receivePort.close();
-    return value as Map<String, dynamic>;
-  });
-
-  return InferenceIsolate(result: resultFuture, isolate: isolate);
+  await Isolate.spawn<T>(isolateEntry, params);
+  return await receivePort.first as Map<String, dynamic>;
 }
