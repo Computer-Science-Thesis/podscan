@@ -152,22 +152,28 @@ class AnalyzeViewModel with ChangeNotifier {
     return map;
   }
 
-  Future<bool> showBackConfirmationDialog(BuildContext context) async {
+  Future<bool> _showConfirmationDialog({
+    required BuildContext context,
+    required Widget title,
+    required Widget content
+  }) async {
     if (isAnalyzing) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text("You can't go back during analysis."),
+          content: Text("You can't go back during detection."),
           duration: Duration(seconds: 2),
         )
       );
       return false;
     }
 
+    if (_detectedObject != 'cacao') return true;
+
     bool? shouldExit = await showDialog<bool>(
       context: context,
       builder: (context) => AlertDialog(
-        title: Text('Confirm Back'),
-        content: Text('Are you sure you want to go back?'),
+        title: title,
+        content: content,
         actions: [
           TextButton(
             onPressed: () => Navigator.of(context).pop(false),
@@ -181,6 +187,22 @@ class AnalyzeViewModel with ChangeNotifier {
       ),
     );
     return shouldExit ?? false;
+  }
+
+  Future<bool> showBackConfirmationDialog(BuildContext context) async {
+    return _showConfirmationDialog(
+      context: context,
+      title: const Text('Confirm Back'),
+      content: const Text('Are you sure you want to go back?')
+    );
+  }
+
+  Future<bool> showRetryConfirmationDialog(BuildContext context) async {
+    return _showConfirmationDialog(
+      context: context,
+      title: const Text('Confirm Retry'),
+      content: const Text('Are you sure you want to retry and not proceed to analyze the image?')
+    );
   }
 
   void goBack(BuildContext context) {

@@ -167,6 +167,7 @@ class _AnalyzeViewBody extends StatelessWidget {
         children: [
           Text(
             message,
+            textAlign: TextAlign.center,
             style: const TextStyle(
               fontFamily: 'CinzelDecorative',
               fontSize: 22,
@@ -218,7 +219,7 @@ class _AnalyzeViewBody extends StatelessWidget {
         elevation: 5,
       ),
       onPressed: () async {
-        final shouldGoBack = await viewModel.showBackConfirmationDialog(context);
+        final shouldGoBack = await viewModel.showRetryConfirmationDialog(context);
         if (context.mounted && shouldGoBack) viewModel.goBack(context);
       },
       child: const Text(
