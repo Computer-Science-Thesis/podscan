@@ -172,24 +172,36 @@ class AnalyzeViewModel with ChangeNotifier {
   }
 
   Future<bool> showBackConfirmationDialog(BuildContext context) async {
-    return (await showDialog(
+    if (isAnalyzing) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text("You can't go back during analysis."),
+          duration: Duration(seconds: 2),
+        )
+      );
+      return false;
+    }
+
+    bool? shouldExit = await showDialog<bool>(
       context: context,
       builder: (context) => AlertDialog(
         title: Text('Confirm Back'),
-        content: Text('Cancelling the analysis session. Do you want to continue?'),
+        content: Text('Are you sure you want to go back?'),
         actions: [
           TextButton(
             onPressed: () => Navigator.of(context).pop(false),
-            child: Text('No')
+            child: Text('No'),
           ),
           TextButton(
             onPressed: () => Navigator.of(context).pop(true),
-            child: Text('Yes')
-          )
+            child: Text('Yes'),
+          ),
         ],
-      )
-    )) ?? false;
+      ),
+    );
+    return shouldExit ?? false;
   }
+
 
   void goBack(BuildContext context) {
     debugPrint("Killing all running isolates...");
