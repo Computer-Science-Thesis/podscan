@@ -15,8 +15,8 @@ class YoloV5sModel extends BaseModel {
   @override
   Future<void> runInference({
     required File imageFile,
-    double confidenceThreshold = 0.5,
-    double nmsIouThreshold = 0.5
+    double confidenceThreshold = 0.8,
+    double nmsIouThreshold = 0.6
   }) async {
     await super.runInference(imageFile: imageFile);
     if (!hasBaseOutput) {

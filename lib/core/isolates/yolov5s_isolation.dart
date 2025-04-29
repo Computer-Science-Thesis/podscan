@@ -6,14 +6,11 @@ import 'package:podscan/core/services/model_service.dart';
 
 
 class YoloV5sIsolateParams extends BaseIsolateParams {
-  final double confidenceThreshold;
-
   YoloV5sIsolateParams({
     required super.imagePath,
     required super.modelPath,
     required super.sendPort,
-    required super.rootIsolateToken,
-    this.confidenceThreshold = 0.5
+    required super.rootIsolateToken
   });
 }
 
@@ -24,10 +21,7 @@ void yoloIsolateEntry(YoloV5sIsolateParams params) async {
       final File imageFile = File(params.imagePath);
       final YoloV5sModel model = YoloV5sModel();
       model.load(modelFile: File(params.modelPath!));
-      await model.runInference(
-        imageFile: imageFile,
-        confidenceThreshold: params.confidenceThreshold,
-      );
+      await model.runInference(imageFile: imageFile);
       final Map<String, dynamic> result = {
         'normalizedBboxMinmax': model.normalizedBboxMinmax,
         'confidence': model.detectedObjectConfidence,
