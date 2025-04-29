@@ -211,7 +211,7 @@ class _AnalyzeViewBody extends StatelessWidget {
       style: ElevatedButton.styleFrom(
         backgroundColor: const Color(0xFF628E6E),
         foregroundColor: Colors.white,
-        minimumSize: const Size(0, 50),
+        minimumSize: const Size(150, 50),
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(10.0),
         ),
@@ -262,26 +262,33 @@ class _AnalyzeViewBody extends StatelessWidget {
   Widget _buildActionButtons(AnalyzeViewModel viewModel, BuildContext context) {
     return LayoutBuilder(
       builder: (context, constraints) {
+        bool hasCacao = viewModel.detectedObject == 'cacao';
         double buttonWidth = (constraints.maxWidth - 15) / 2;
 
-        return Wrap(
-          alignment: WrapAlignment.center,
-          spacing: 15,
-          runSpacing: 10,
-          children: [
-            SizedBox(
-              width: viewModel.detectedObject == 'cacao' ? buttonWidth : constraints.maxWidth,
-              child: _buildRetryButton(viewModel, context),
-            ),
-            if (viewModel.detectedObject == 'cacao')
-              SizedBox(
-                width: buttonWidth,
-                child: _buildAnalyzeButton(viewModel, context),
-              ),
-          ],
+        return Center(
+          child: hasCacao
+              ? Wrap(
+                  alignment: WrapAlignment.center,
+                  crossAxisAlignment: WrapCrossAlignment.center,
+                  spacing: 15,
+                  runSpacing: 10,
+                  children: [
+                    SizedBox(
+                      width: buttonWidth,
+                      child: _buildRetryButton(viewModel, context),
+                    ),
+                    SizedBox(
+                      width: buttonWidth,
+                      child: _buildAnalyzeButton(viewModel, context),
+                    ),
+                  ],
+                )
+              : SizedBox(
+                  width: buttonWidth, // Or use a smaller width if you want
+                  child: _buildRetryButton(viewModel, context),
+                ),
         );
       },
     );
   }
-
 }
