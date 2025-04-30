@@ -111,6 +111,11 @@ class AnalyzeViewModel with ChangeNotifier {
       referenceMask: podMask
     );
 
+    if (diseasePercentage < 0.01) {
+      diseaseMap = {'Healthy': 1};
+      pestMap = {'Healthy': 'unknown pest'};
+    }
+  
     stopWatch.stop();
 
     debugPrint('Total analysis process time: ${stopWatch.elapsedMilliseconds}ms');
@@ -160,7 +165,7 @@ class AnalyzeViewModel with ChangeNotifier {
     if (isAnalyzing) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text("You can't go back during detection."),
+          content: Text("You can't go back during analysis."),
           duration: Duration(seconds: 2),
         )
       );
