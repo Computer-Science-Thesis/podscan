@@ -69,7 +69,7 @@ class ImageService {
 
     for (int y = 0; y < height; y++) {
       for (int x = 0; x < width; x++) {
-        final int pixelValue = ((nPixVals[y][x] as num) * 255).clamp(0, 255).toInt();
+        final int pixelValue = ((nPixVals[y][x].toDouble()) * 255).clamp(0, 255).toInt();
         final img.ColorRgb8 pixelColor = img.ColorRgb8(pixelValue, pixelValue, pixelValue);
         image.setPixel(x, y, pixelColor);
       }
