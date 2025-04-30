@@ -60,8 +60,10 @@ class ImageService {
     return Uint8List.fromList(img.encodeJpg(croppedImage));
   }
 
-  Future<File?> generateImage(List<List<double>> normalizedPixelValues, int width, int height) async {
+  Future<File?> generateImage(List<List<double>> normalizedPixelValues) async {
     List<List<double>> nPixVals = normalizedPixelValues;
+    final height = nPixVals.length;
+    final width = nPixVals[0].length;
 
     final img.Image image = img.Image(width: width, height: height);
 
