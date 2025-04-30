@@ -20,7 +20,7 @@ class BaseModel {
 
   void load({required File modelFile}) {
     try {
-      _interpreter = Interpreter.fromFile(modelFile);
+      _interpreter = Interpreter.fromFile(modelFile, options: InterpreterOptions()..threads = 4);
       _inputShape = _interpreter?.getInputTensors()[0].shape;
       _outputShape = _interpreter?.getOutputTensors()[0].shape;
     } catch (e) {
