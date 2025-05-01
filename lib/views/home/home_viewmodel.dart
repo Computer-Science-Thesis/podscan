@@ -1,5 +1,6 @@
 import 'dart:io';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:permission_handler/permission_handler.dart';
 import '../detect/detect_view.dart';
@@ -51,9 +52,13 @@ class HomeViewModel with ChangeNotifier {
         )) ?? false; // Default to false if dialog is dismissed
   }
 
-  void exit(BuildContext context) {
+  void closeApp(BuildContext context) {
     debugPrint("Exiting...");
-    Navigator.of(context).pop();
+    if (Platform.isAndroid) {
+      SystemNavigator.pop();
+    } else {
+      exit(0);
+    }
   }
 
   void goToDetectView(File imageFile, BuildContext context) {

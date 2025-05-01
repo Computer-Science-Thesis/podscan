@@ -25,7 +25,7 @@ class _HomeViewBody extends StatelessWidget {
       onPopInvokedWithResult: (didPop, result) async {
         if (didPop) return;
         final shouldPop = await viewModel.showExitConfirmationDialog(context);
-        if (context.mounted && shouldPop) viewModel.exit(context);
+        if (context.mounted && shouldPop) viewModel.closeApp(context);
       },
       child: Scaffold(
         body: _buildBody(viewModel, context),
